@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="oath2-server documentation">
+    <meta name="author" content="Jacques Labuschagne">
+
+    <title>jlabusch.github.io/oauth2-server</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <link href="css/freelancer.css" rel="stylesheet" type="text/css">
+
+    <!-- Fonts -->
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
+
+    <!-- IE8 support for HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body id="page-top" class="index">
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#page-top">jlabusch.github.io</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="hidden">
+                        <a href="#page-top"></a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="#getting-started">Getting Started</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="#arch-1">OAuth 2.0 Primer</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="#arch-2">Architecture</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="#contact">Contact</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <header>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="intro-text">
+                        <span class="name">OAuth 2.0 Server</span>
+                        <hr class="star-light">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 text-left">
+                    <p>This is an OAuth 2.0 server based on <a href="https://github.com/jaredhanson">Jared Hanson's</a>
+                    Passport and Oauth2orize modules. Its primary focus is the Authentication Code Grant and Implicit Grant patterns
+                    (<a href="http://tools.ietf.org/html/rfc6749">See RFC 6749</a>).</p>
+                    <p><a href="http://passportjs.org/">Passport</a> provides a good framework for authentication
+                    in Node &mdash; This project is not about reinventing that wheel, or providing just a bit of
+                    syntactic sugar.</p>
+                    <p>The point of this project is to provide an essentially production-ready solution with
+                    enough architectural documentation to allow you to easily evaluate (a) whether it does
+                    what you need, and (b) which bits are likely to benefit from further customization.</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="getting-started">
+        <div class="container">
+            <div class="row text-center">
+                <h2>Getting Started</h2>
+                <hr class="star-primary">
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <span class="words">Get Node</span>
+                    <code><pre>    > sudo add-apt-repository ppa:chris-lea/node.js
+    > sudo apt-get update
+    > sudo apt-get install nodejs</pre></code>
+                    <span class="words">Get the source</span>
+                    <code><pre>    > git clone https://github.com/jlabusch/oauth2-server.git
+    > cd oauth2-server</pre></code>
+                    <span class="words">Make</span>
+                    <code><pre>    > npm install
+    > ./node_modules/bower/bin/bower install</pre></code>
+                    <span class="words">Run</span>
+                    <code><pre>    > npm test</pre></code>
+                    <p>See also <tt>npm [stop|start|restart]</tt>.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="success" id="arch-1">
+        <div class="container">
+            <div class="row text-center">
+                <h2>OAuth 2.0 Primer</h2>
+                <hr class="star-light">
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <p>For context, let's revisit OAuth 2.0 basics. The RFC defines the abstract protocol flow as:</p>
+<pre>     +--------+                               +---------------+
+     |        |--(A)- Authorization Request ->|   Resource    |
+     |        |                               |     Owner     |
+     |        |<-(B)-- Authorization Grant ---|               |
+     |        |                               +---------------+
+     |        |
+     |        |                               +---------------+
+     |        |--(C)-- Authorization Grant -->| Authorization |
+     | Client |                               |     Server    |
+     |        |<-(D)----- Access Token -------|               |
+     |        |                               +---------------+
+     |        |
+     |        |                               +---------------+
+     |        |--(E)----- Access Token ------>|    Resource   |
+     |        |                               |     Server    |
+     |        |<-(F)--- Protected Resource ---|               |
+     +--------+                               +---------------+</pre>
+                <p>The participants are:</p>
+                <span class="words">
+                    <ul>
+                        <li>Resource Owner: The end user.
+                        <li>Client: The third party site you're exposing your protected resources to.
+                        <li>Resource Server: The server hosting the protected resources.
+                        <li>Authorization Server: This application.
+                    </ul>
+                </span>
+                <p>
+                    As a concrete example, if you allow people (i.e. Resource Owners) to log in to your site via Twitter, then
+                    you take on the role of Client, Twitter's core is the Resource Server and
+                    Twitter's OAuth provider is the Authorization Server.
+                </p>
+                <p>The point of all of this is:</p>
+                <span class="words">
+                    <ol>
+                        <li>Users get to make explicit decisions about what information they share, and with who
+                        <li>Resource Servers can integrate with third parties <em>without</em> exposing
+                        Resource Owner credentials.
+                    </ol>
+                </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="arch-2">
+        <div class="container">
+            <div class="row text-center">
+                <h2>Architecture</h2>
+                <hr class="star-primary">
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <p>In its role as Authorization Server, this application acts as
+                    a broker for the interactions between the other participants. It
+                    maintains a registry of accepted Client sites, authenticates users against
+                    the Resource Server and manages the authorization granted by those users for
+                    Client access to their data.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="text-center" id="contact">
+        <div class="footer-above">
+            <div class="container">
+                <div class="row">
+                    <div class="footer-col col-md-4">
+                        <h3>Location</h3>
+                        <p>Wellington,<br>
+                           New Zealand</p>
+                    </div>
+                    <div class="footer-col col-md-4">
+                    </div>
+                    <div class="footer-col col-md-4">
+                        <h3>Around the Web</h3>
+                        <ul class="list-inline">
+                            <li><a href="https://github.com/jlabusch" class="btn-social btn-outline"><i class="fa fa-fw fa-github"></i></a>
+                            </li>
+                            <li><a href="https://plus.google.com/113154189645874995686" class="btn-social btn-outline"><i class="fa fa-fw fa-google-plus"></i></a>
+                            </li>
+                            <li><a href="https://twitter.com/jlabusch" class="btn-social btn-outline"><i class="fa fa-fw fa-twitter"></i></a>
+                            </li>
+                            <li><a href="http://nz.linkedin.com/pub/jacques-labuschagne/0/47a/512/" class="btn-social btn-outline"><i class="fa fa-fw fa-linkedin"></i></a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-below">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+                        Copyright &copy; 2014 - Jacques Labuschagne
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="scroll-top page-scroll visible-xs visble-sm">
+        <a class="btn btn-primary" href="#page-top">
+            <i class="fa fa-chevron-up"></i>
+        </a>
+    </div>
+
+    <script src="js/jquery-1.10.2.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js"></script>
+    <script src="js/classie.js"></script>
+    <script src="js/cbpAnimatedHeader.js"></script>
+    <script src="js/freelancer.js"></script>
+
+</body>
+
+</html>
