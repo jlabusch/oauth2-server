@@ -1,6 +1,8 @@
 oauth2-server
 =============
 
+[![Build Status](https://travis-ci.org/jlabusch/oauth2-server.svg?branch=master)](https://travis-ci.org/jlabusch/oauth2-server)
+
 Documentation
 -------------
 
