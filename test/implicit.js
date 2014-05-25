@@ -37,7 +37,7 @@ var validate = {
             should.not.exist(err);
             res.should.have.status(200);
             (!res.redirects).should.be.false;
-            decodeURIComponent(res.redirects[0]).should.equal(host + '/dialog/authorize?' + sp_link_params);
+            decodeURIComponent(res.redirects[0]).should.equal(host + '/authorize?' + sp_link_params);
             var sid_match = res.headers['set-cookie'].toString().match(/sid=([^;]+)/);
             (null !== sid_match).should.be.true;
             u.sid.should.equal(sid_match[1]);
@@ -130,7 +130,7 @@ describe('implicit grant', function(){
         basic_flow_user = u1;
 
         it('should redir to /login', function(done){
-            u1.a.get(host + '/dialog/authorize?' + sp_link_params)
+            u1.a.get(host + '/authorize?' + sp_link_params)
                 .end(validate.challenge(u1, done));
         });
         it('should auth and prompt for consent', function(done){
@@ -142,7 +142,7 @@ describe('implicit grant', function(){
         });
         it('should consent and redir to client with token', function(done){
             this.timeout(5*1000);
-            u1.a.post(host + '/dialog/authorize/decision')
+            u1.a.post(host + '/authorize')
                 .send({transaction_id: u1.txn})
                 .redirects(0)
                 .end(validate.token(u1, sp_redirect_uri, done));
@@ -158,11 +158,11 @@ describe('implicit grant', function(){
             u2 = make_user();
 
         it('u1 /login', function(done){
-            u1.a.get(host + '/dialog/authorize?' + sp_link_params)
+            u1.a.get(host + '/authorize?' + sp_link_params)
                 .end(validate.challenge(u1, done));
         });
         it('u2 /login', function(done){
-            u2.a.get(host + '/dialog/authorize?' + sp_link_params)
+            u2.a.get(host + '/authorize?' + sp_link_params)
                 .end(validate.challenge(u2, done));
         });
         it('u1 auth + consent', function(done){
@@ -179,14 +179,14 @@ describe('implicit grant', function(){
         });
         it('u2 gets token', function(done){
             this.timeout(5*1000);
-            u2.a.post(host + '/dialog/authorize/decision')
+            u2.a.post(host + '/authorize')
                 .send({transaction_id: u2.txn})
                 .redirects(0)
                 .end(validate.token(u2, sp_redirect_uri, done));
         });
         it('u1 gets token', function(done){
             this.timeout(5*1000);
-            u1.a.post(host + '/dialog/authorize/decision')
+            u1.a.post(host + '/authorize')
                 .send({transaction_id: u1.txn})
                 .redirects(0)
                 .end(validate.token(u1, sp_redirect_uri, done));
@@ -206,7 +206,7 @@ describe('implicit grant', function(){
         var u1 = make_user();
 
         it('should redir to /login', function(done){
-            u1.a.get(host + '/dialog/authorize?' + sp_link_params)
+            u1.a.get(host + '/authorize?' + sp_link_params)
                 .end(validate.challenge(u1, done));
         });
         it('should auth and prompt for consent', function(done){
@@ -217,7 +217,7 @@ describe('implicit grant', function(){
         });
         it('should redirect with error', function(done){
             this.timeout(5*1000);
-            u1.a.post(host + '/dialog/authorize/decision')
+            u1.a.post(host + '/authorize')
                 .send({transaction_id: u1.txn, cancel: 'Deny'})
                 .redirects(0)
                 .end(validate.no_token(u1, sp_redirect_uri, done));
@@ -228,15 +228,15 @@ describe('implicit grant', function(){
         var prev_token,
             new_token;
 
-        it('should redir to /dialog/authorize', function(done){
+        it('should redir to /authorize', function(done){
             this.timeout(5*1000);
             prev_token = u1.token;
-            u1.a.get(host + '/dialog/authorize?' + sp_link_params)
+            u1.a.get(host + '/authorize?' + sp_link_params)
                 .end(validate.consent_already_logged_in(u1, sp_link_params, done));
         });
         it('should consent and redir to client with token', function(done){
             this.timeout(5*1000);
-            u1.a.post(host + '/dialog/authorize/decision')
+            u1.a.post(host + '/authorize')
                 .send({transaction_id: u1.txn})
                 .redirects(0)
                 .end(validate.token(u1, sp_redirect_uri, done));
@@ -254,14 +254,14 @@ describe('implicit grant', function(){
     describe('resource owner revoking consent through front channel', function(){
         var u1 = basic_flow_user;
 
-        it('should redir to /dialog/authorize', function(done){
+        it('should redir to /authorize', function(done){
             this.timeout(5*1000);
-            u1.a.get(host + '/dialog/authorize?' + sp_link_params)
+            u1.a.get(host + '/authorize?' + sp_link_params)
                 .end(validate.consent_already_logged_in(u1, sp_link_params, done));
         });
         it('should redir with denial error', function(done){
             this.timeout(5*1000);
-            u1.a.post(host + '/dialog/authorize/decision')
+            u1.a.post(host + '/authorize')
                 .send({transaction_id: u1.txn, cancel: 'Deny'})
                 .redirects(0)
                 .end(validate.no_token(u1, sp_redirect_uri, done));

@@ -112,16 +112,16 @@ if (cluster.isMaster){
         // Destroys the user's session. Probably never used in our workflow.
         app.get('/logout', site.logout);
 
-        // GET /dialog/authorize
+        // GET /authorize
         //
         // Prompts the user for consent based on the client and scope
         // Tied to previous login transaction with session cookie named "sid"
-        app.get('/dialog/authorize', oauth2.authorization);
+        app.get('/authorize', oauth2.authorization);
 
-        // POST /dialog/authorize/decision {transaction_id: T [, cancel: "Deny"]}
+        // POST /authorize {transaction_id: T [, cancel: "Deny"]}
         //
         // User consents/refuses access to the requested scope
-        app.post('/dialog/authorize/decision', oauth2.decision);
+        app.post('/authorize', oauth2.decision);
 
         // POST /token {grant_type: "authorization_code", code: C, client_id: I, client_secret: S, redirect_uri: R}
         //

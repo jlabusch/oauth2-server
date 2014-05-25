@@ -61,7 +61,7 @@ var validate = {
             should.not.exist(err);
             res.should.have.status(200);
             (!res.redirects).should.be.false;
-            decodeURIComponent(res.redirects[0]).should.equal(host + '/dialog/authorize?' + sp_link_params);
+            decodeURIComponent(res.redirects[0]).should.equal(host + '/authorize?' + sp_link_params);
             var sid_match = res.headers['set-cookie'].toString().match(/sid=([^;]+)/);
             (null !== sid_match).should.be.true;
             u.sid.should.equal(sid_match[1]);
@@ -150,7 +150,7 @@ describe('auth code grant', function(){
         basic_flow_user = u1;
 
         it('should redir to /login', function(done){
-            u1.a.get(host + '/dialog/authorize?' + sp_link_params)
+            u1.a.get(host + '/authorize?' + sp_link_params)
                 .end(validate.challenge(u1, done));
         });
         it('should auth and prompt for consent', function(done){
@@ -161,7 +161,7 @@ describe('auth code grant', function(){
         });
         it('should consent and redir to client with code', function(done){
             this.timeout(5*1000);
-            u1.a.post(host + '/dialog/authorize/decision')
+            u1.a.post(host + '/authorize')
                 .send({transaction_id: u1.txn})
                 .redirects(0)
                 .end(validate.code(u1, sp_redirect_uri, done));
@@ -209,7 +209,7 @@ describe('auth code grant', function(){
         var u1 = make_user();
 
         it('should redir to /login', function(done){
-            u1.a.get(host + '/dialog/authorize?' + sp_bad_client_link_params)
+            u1.a.get(host + '/authorize?' + sp_bad_client_link_params)
                 .end(validate.challenge(u1, done));
         });
         it('should fail auth', function(done){
@@ -224,7 +224,7 @@ describe('auth code grant', function(){
         var u1 = make_user();
 
         it('should redir to /login', function(done){
-            u1.a.get(host + '/dialog/authorize?' + sp_link_params)
+            u1.a.get(host + '/authorize?' + sp_link_params)
                 .end(validate.challenge(u1, done));
         });
         it('should auth and prompt for consent', function(done){
@@ -235,7 +235,7 @@ describe('auth code grant', function(){
         });
         it('should consent and redir to client with code', function(done){
             this.timeout(5*1000);
-            u1.a.post(host + '/dialog/authorize/decision')
+            u1.a.post(host + '/authorize')
                 .send({transaction_id: u1.txn})
                 .redirects(0)
                 .end(validate.code(u1, sp_redirect_uri, done));
@@ -266,7 +266,7 @@ describe('auth code grant', function(){
         var u1 = make_user();
 
         it('should redir to /login', function(done){
-            u1.a.get(host + '/dialog/authorize?' + sp_link_params)
+            u1.a.get(host + '/authorize?' + sp_link_params)
                 .end(validate.challenge(u1, done));
         });
         it('should fail auth', function(done){
