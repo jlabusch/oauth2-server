@@ -1,0 +1,24 @@
+[
+  {
+    "id": "1",
+    "name": "Stuff Nation IdP Demo",
+    "clientId": "sp-demo",
+    "clientSecret": "hunter2",
+    "allowCodeGrant": true,
+    "allowImplicitGrant": true,
+    "validRedirects": [
+        "http://localhost:8080/"
+    ]
+  },
+  {
+    "id": "2",
+    "name": "Automated tests",
+    "clientId": "test",
+    "clientSecret": "hunter2",
+    "allowCodeGrant": true,
+    "allowImplicitGrant": true,
+    "validRedirects": [
+        "http://localhost:8080/"
+    ]
+  }
+]

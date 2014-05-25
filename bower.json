@@ -1,0 +1,10 @@
+{
+  "name": "fairfax-oauth",
+  "description": "OAuth 2.0 interface to Stuff Nation (stuff.co.nz)",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "dependencies": {
+    "bootstrap": "~3.1.1"
+  }
+}

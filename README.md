@@ -4,7 +4,7 @@ oauth2-server
 Documentation
 -------------
 
-http://jlabusch.github.io/fairfax-oauth
+http://jlabusch.github.io/oauth2-server/
 
 License - GPLv3
 ---------------

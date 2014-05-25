@@ -1,0 +1,16 @@
+    <div class="container">
+      <form class="form-signin" role="form" action="/dialog/authorize/decision" method="post">
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Grant access?</h3>
+          </div>
+          <div class="panel-body">
+            <p>Hi <%= user.firstName %>,</p>
+            <p>Is it OK if we share your basic Stuff Nation account information with <strong><%= client.name %></strong>?</p>
+          </div>
+        </div>
+        <input name="transaction_id" type="hidden" value="<%= transactionID %>">
+        <button class="btn btn-lg btn-primary btn-block" type="submit" value="Allow" id="allow">Allow</button>
+        <button name="cancel" class="btn btn-lg btn-primary btn-block" type="submit" value="Deny" id="deny">Deny</button>
+      </form>
+    </div>

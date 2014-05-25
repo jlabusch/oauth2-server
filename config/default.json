@@ -1,0 +1,35 @@
+{
+    "auth_server": {
+        "hostname": "127.0.0.1",
+        "port": 8081,
+        "ssl": false,
+        "ssl_cert": null,
+        "ssl_key": null,
+        "session_secret": "REPLACE ME",
+        "views": {
+            "layout": "layout",
+            "login": "login",
+            "dialog": "dialog"
+        }
+    },
+    "client_credentials": {
+        "file": "./clients.json.example"
+    },
+    "storage": {
+        "default": {
+            "type": "MemStore",
+            "host": "127.0.0.1",
+            "port": 8083
+        }
+    },
+    "resource_server": {
+        "type": "dummy",
+        "host": "127.0.0.1",
+        "port": 8084,
+        "user_agent": "OAuth-IdP/0.4.0"
+    },
+    "logging": {
+        "level": "notice",
+        "short_sid": true
+    }
+}

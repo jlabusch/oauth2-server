@@ -1,0 +1,12 @@
+    <div class="container">
+      <form class="form-signin" role="form" action="/login" method="post">
+        <h2 class="form-signin-heading">Please sign in</h2>
+        <input name="username" type="email" class="form-control" placeholder="Email address" required autofocus>
+        <input name="password" type="password" class="form-control" placeholder="Password" required>
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+        <% if (message){ %>
+            <p/>
+            <div class="alert alert-danger"> <%= message %> </div>
+        <% } %>
+      </form>
+    </div>
