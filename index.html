@@ -53,6 +53,9 @@
                     <li class="page-scroll"><a href="#arch-2">Architecture</a></li>
                     <li class="page-scroll"><a href="#arch-webserver">Express Webserver</a></li>
                     <li class="page-scroll"><a href="#arch-db">DB &amp; Storage</a></li>
+                    <li class="page-scroll"><a href="#arch-logging">Logging</a></li>
+                    <li class="page-scroll"><a href="#arch-config">Configuration</a></li>
+                    <li class="page-scroll"><a href="#testing">Testing</a></li>
                     <li class="page-scroll"><a href="#contact">Contact</a></li>
                 </ul>
             </div>
@@ -232,7 +235,60 @@
                     are included: MemStore, a simple REST interface that might be a good way
                     to bridge to slow data stores, and Redis, an interface to <a href="http://redis.io/">redis-server</a>.</p>
                     <p>Both the Redis and MemStore interfaces support clustering and multiple
-                    application instances. See <code>./lib/store.js</code> for more.</p>
+                    application instances.</p>
+                    <h3>Abstraction</h3>
+                    <p>As per the component diagram, it's useful to think about storage on three levels:</p>
+                    <span class="words">
+                        <ul>
+                            <li>DB abstraction: <code>./db/*.js</code> provides functions for accessing specific
+                            kinds of data in an implementation agnostic way</li>
+                            <li>Storage interface: <code>./lib/store.js</code> provides interfaces to "real"
+                            databases, e.g. redis-server. It's relatively easy to add support for additional
+                            storage types, and to switch between them by changing config on a per-table basis
+                            (i.e. "users" and "tokens" could have different kinds of storage.)</li>
+                            <li>Actual storage: Likely to vary between projects based on your specific situation
+                            and requirements.</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="success" id="arch-logging">
+        <div class="container">
+            <div class="row text-center">
+                <h2>Logging</h2>
+                <hr class="star-light">
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="arch-config">
+        <div class="container">
+            <div class="row text-center">
+                <h2>Configuration</h2>
+                <hr class="star-primary">
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="success" id="testing">
+        <div class="container">
+            <div class="row text-center">
+                <h2>Testing</h2>
+                <hr class="star-light">
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
                 </div>
             </div>
         </div>
