@@ -127,24 +127,8 @@
             </div>
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2">
-                    <p>For context, let's revisit OAuth 2.0 basics. The RFC defines the abstract protocol flow as:</p>
-<pre>     +--------+                               +---------------+
-     |        |--(A)- Authorization Request ->|   Resource    |
-     |        |                               |     Owner     |
-     |        |<-(B)-- Authorization Grant ---|               |
-     |        |                               +---------------+
-     |        |
-     |        |                               +---------------+
-     |        |--(C)-- Authorization Grant -->| Authorization |
-     | Client |                               |     Server    |
-     |        |<-(D)----- Access Token -------|               |
-     |        |                               +---------------+
-     |        |
-     |        |                               +---------------+
-     |        |--(E)----- Access Token ------>|    Resource   |
-     |        |                               |     Server    |
-     |        |<-(F)--- Protected Resource ---|               |
-     +--------+                               +---------------+</pre>
+                <p>For context, let's revisit OAuth 2.0 basics. The RFC defines the abstract protocol flow as:</p>
+                <img class="img-responsive" src="img/daig_rfc_abstract_flow.png" alt="OAuth2.0 - Abstract Protocol Flow">
                 <p>The participants are:</p>
                 <span class="words">
                     <ul>
