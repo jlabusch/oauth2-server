@@ -5,7 +5,7 @@
         "ssl": false,
         "ssl_cert": null,
         "ssl_key": null,
-        "session_secret": "REPLACE ME",
+        "session_secret": "$4$eRDyE/eQ$/F/mHVBpobUbTB7VcaFQ5GfaCNg$",
         "views": {
             "layout": "layout",
             "login": "login",

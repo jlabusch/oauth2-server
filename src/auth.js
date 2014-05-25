@@ -7,6 +7,7 @@ var passport = require('passport'),
     short_token = require('../lib/logging').format_sid,
     config = require('../lib/config'),
     db = require('../db'),
+    crypto = require('crypto'),
     librs = require('../lib/resource_server');
 
 librs.load_login(function(err, fn){
@@ -43,7 +44,15 @@ function client_id_auth(strategy_name){
                 log('warn', "couldn't authenticate client with " + strategy_name + "Strategy: no such client (id=" + id + ')');
                 return done(null, false);
             }
-            if (client.clientSecret != secret){
+            var sha = crypto.createHash('sha1'),
+                hash = null;
+            sha.update(client.clientId + ':' + secret + ':' + client.clientSalt);
+            try{
+                hash = sha.digest('hex');
+            }catch(ex){
+                log('error', 'Exception while calculating client secret hash - ' + ex);
+            }
+            if (client.clientSecret != hash){
                 log('warn', "couldn't authenticate client with " + strategy_name + "Strategy: bad secret");
                 return done(null, false);
             }
