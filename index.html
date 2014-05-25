@@ -48,18 +48,12 @@
                     <li class="hidden">
                         <a href="#page-top"></a>
                     </li>
-                    <li class="page-scroll">
-                        <a href="#getting-started">Getting Started</a>
-                    </li>
-                    <li class="page-scroll">
-                        <a href="#arch-1">OAuth 2.0 Primer</a>
-                    </li>
-                    <li class="page-scroll">
-                        <a href="#arch-2">Architecture</a>
-                    </li>
-                    <li class="page-scroll">
-                        <a href="#contact">Contact</a>
-                    </li>
+                    <li class="page-scroll"><a href="#getting-started">Getting Started</a></li>
+                    <li class="page-scroll"><a href="#arch-1">OAuth 2.0 Primer</a></li>
+                    <li class="page-scroll"><a href="#arch-2">Architecture</a></li>
+                    <li class="page-scroll"><a href="#arch-webserver">Express Webserver</a></li>
+                    <li class="page-scroll"><a href="#arch-db">DB &amp; Storage</a></li>
+                    <li class="page-scroll"><a href="#contact">Contact</a></li>
                 </ul>
             </div>
             <!-- /.navbar-collapse -->
@@ -102,17 +96,16 @@
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2">
                     <span class="words">Get Node</span>
-                    <code><pre>    > sudo add-apt-repository ppa:chris-lea/node.js
+                    <pre>    > sudo add-apt-repository ppa:chris-lea/node.js
     > sudo apt-get update
-    > sudo apt-get install nodejs</pre></code>
+    > sudo apt-get install nodejs</pre>
                     <span class="words">Get the source</span>
-                    <code><pre>    > git clone https://github.com/jlabusch/oauth2-server.git
-    > cd oauth2-server</pre></code>
+                    <pre>    > git clone https://github.com/jlabusch/oauth2-server.git
+    > cd oauth2-server</pre>
                     <span class="words">Make</span>
-                    <code><pre>    > npm install
-    > ./node_modules/bower/bin/bower install</pre></code>
+                    <pre>    > npm install</pre>
                     <span class="words">Run</span>
-                    <code><pre>    > npm test</pre></code>
+                    <pre>    > npm test</pre>
                     <p>See also <tt>npm [stop|start|restart]</tt>.
                 </div>
             </div>
@@ -170,6 +163,76 @@
                     the Resource Server and manages the authorization granted by those users for
                     Client access to their data.</p>
                     <img class="img-responsive" src="img/diag_components.png" alt="Server components">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="success" id="arch-webserver">
+        <div class="container">
+            <div class="row text-center">
+                <h2>Express Webserver</h2>
+                <hr class="star-light">
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <p>The heart of the application is the <a href="http://expressjs.com/">Express</a> /
+                    <a href="http://passportjs.org/">Passport</a> /
+                    <a href="https://github.com/jaredhanson/oauth2orize">Oauth2orize</a> stack, which
+                    defines the framework in which the OAuth interactions take place.</p>
+                    <p>The basic interactions are:</p>
+                    <span class="words">
+                        <h4>GET /login</h4>
+                        Prompts the Resource Owner for his credentials using an EJS template configured
+                        in <code>auth_server.views.login</code> (default <code>./views/login.ejs</code>)
+                        <h4>POST /login</h4>
+                        Authenticates the Resource Owner against the Resource Server using a
+                        custom function that you'll need to define. Some examples are included in
+                        <code>./lib/resource_server.js</code>
+                        <h4>GET /authorize</h4>
+                        Prompts the user for authorization to share their protected resources with
+                        the Client site. Uses the <code>auth_server.views.dialog</code> EJS template
+                        (default <code>./views/dialog.ejs</code>)
+                        <h4>POST /authorize</h4>
+                        Handles the result of the user's decision. Depending on the OAuth pattern chosen
+                        by the Client, this can result in an access token or an authorization code
+                        (which the Client then redeems for an access token.)
+                        <h4>POST /token</h4>
+                        Exchanges an authorization code for an access token.
+                        <h4>GET /api/userinfo</h4>
+                        Example service allowing access to protected resources based on access tokens.
+                        This (and any other <code>/api/</code> services) will be highly specific to the
+                        Resource Server. Some examples are provided in <code>./lib/resource_server.js</code>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="arch-db">
+        <div class="container">
+            <div class="row text-center">
+                <h2>DB &amp; Storage</h2>
+                <hr class="star-primary">
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <p>The application stores a few different kinds of state:</p>
+                    <span class="words">
+                        <ul>
+                            <li>User sessions</li>
+                            <li>Authorization codes</li>
+                            <li>Access tokens</li>
+                            <li>Client site metadata (JSON file; see <code>./clients.json.example</code>)</li>
+                            <li>User metadata (not exposed to Client sites)</li>
+                        </ul>
+                    </span>
+                    <p>This is an area you're very likely to want to customize based on
+                    your existing ecosystem and deployment environment. Two storage examples
+                    are included: MemStore, a simple REST interface that might be a good way
+                    to bridge to slow data stores, and Redis, an interface to <a href="http://redis.io/">redis-server</a>.</p>
+                    <p>Both the Redis and MemStore interfaces support clustering and multiple
+                    application instances. See <code>./lib/store.js</code> for more.</p>
                 </div>
             </div>
         </div>
