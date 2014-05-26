@@ -99,16 +99,16 @@
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2">
                     <span class="words">Get Node</span>
-                    <pre>    > sudo add-apt-repository ppa:chris-lea/node.js
-    > sudo apt-get update
-    > sudo apt-get install nodejs</pre>
+                    <pre> > sudo add-apt-repository ppa:chris-lea/node.js
+ > sudo apt-get update
+ > sudo apt-get install nodejs</pre>
                     <span class="words">Get the source</span>
-                    <pre>    > git clone https://github.com/jlabusch/oauth2-server.git
-    > cd oauth2-server</pre>
+                    <pre> > git clone https://github.com/jlabusch/oauth2-server.git
+ > cd oauth2-server</pre>
                     <span class="words">Make</span>
-                    <pre>    > npm install</pre>
+                    <pre> > npm install</pre>
                     <span class="words">Run</span>
-                    <pre>    > npm test</pre>
+                    <pre> > npm test</pre>
                     <p>See also <tt>npm [stop|start|restart]</tt>.
                 </div>
             </div>
@@ -206,14 +206,14 @@
                         Resource Server.
                     </span>
                     <h3>Interface - Resource Server</h3>
-                    <pre>    exports.dummy = {
-        login: function(username, password, next){
-            // Authenticate the user and call next(...)
-        },
-        query: function(req, res){
-            // Retrieve protected resource
-        }
-    };</pre>
+                    <pre>exports.dummy = {
+  login: function(username, password, next){
+    // Authenticate the user and call next(...)
+  },
+  query: function(req, res){
+    // Retrieve protected resource
+  }
+}</pre>
                     <p>The <code>login()</code> function should invoke <code>next</code> in the following ways:</p>
                     <span class="words">
                         <ul>
@@ -227,13 +227,13 @@
                     <p>The result should be written using the HTTP/S response argument <code>res</code>,
                     e.g. using <code>res.json(...)</code>.
                     <h3>Config - Resource Server</h3>
-                    <pre>    "resource_server": {
-        "type": "dummy",
-        "host": "127.0.0.1",
-        "port": 8084,
-        "basic_auth": "user:pass",
-        "user_agent": "OAuth-IdP/0.4.0"
-    }</pre>
+                    <pre>"resource_server": {
+  "type": "dummy",
+  "host": "127.0.0.1",
+  "port": 8084,
+  "basic_auth": "user:pass",
+  "user_agent": "OAuth-IdP/0.4.0"
+}</pre>
                     <span class="words">
                         <ul>
                             <li><code>type</code>: The name of an object exported from
@@ -243,19 +243,19 @@
                     <p>Any additional options can be defined for your own implementation of the
                     Resource Server interface.</p>
                     <h3>Config - Authentication Server</h3>
-                    <pre>    "auth_server": {
-        "hostname": "127.0.0.1",
-        "port": 8081,
-        "ssl": false,
-        "ssl_cert": null,
-        "ssl_key": null,
-        "session_secret": "REPLACE ME",
-        "views": {
-            "layout": "layout",
-            "login": "login",
-            "dialog": "dialog"
-        }
-    }</pre>
+                    <pre>"auth_server": {
+  "hostname": "127.0.0.1",
+  "port": 8081,
+  "ssl": false,
+  "ssl_cert": null,
+  "ssl_key": null,
+  "session_secret": "REPLACE ME",
+  "views": {
+    "layout": "layout",
+    "login": "login",
+    "dialog": "dialog"
+  }
+}</pre>
                     <p>The Authentication Server portion controls the operation of the core Express webserver.</p>
                     <span class="words">
                         <ul>
@@ -329,24 +329,24 @@
                     </span>
                     <p>One final type, <code>default</code>, provides a catchall.</p>
                     <p>Out of the box, the supported storage interfaces are Redis and MemStore.</p>
-                    <pre>    "storage": {
-        "default": {
-            "type": "MemStore",
-            "host": "127.0.0.1",
-            "port": 8083
-        }
-    }</pre>
+                    <pre>"storage": {
+  "default": {
+    "type": "MemStore",
+    "host": "127.0.0.1",
+    "port": 8083
+  }
+}</pre>
                     <p><em>TODO: describe MemStore REST API and dummy server</em></p>
-                    <pre>    "storage": {
-        "default": {
-            "type": "Redis",
-            "db": 0,
-            "host": "127.0.0.1",
-            "port": 6379,
-            "ttl": 900,
-            "options": {}
-        }
-    }</pre>
+                    <pre>"storage": {
+  "default": {
+    "type": "Redis",
+    "db": 0,
+    "host": "127.0.0.1",
+    "port": 6379,
+    "ttl": 900,
+    "options": {}
+  }
+}</pre>
                     <p>Redis storage depends on the <code>redis-server</code> package (tested with 2.6.)
                     and the Node <code>redis</code> and <code>hiredis</code> modules.</p>
                     <span class="words">
@@ -362,23 +362,23 @@
                     </span>
                     <h3>Config - Clients</h3>
                     <p>The list of accepted clients is stored in a JSON file on disk.</p>
-                    <pre>    "client_credentials": {
-        "file": "./clients.json"
-    }</pre>
+                    <pre>"client_credentials": {
+  "file": "./clients.json"
+}</pre>
                     <p>Entries in the file define client credentials, redirect URIs and allowed
                     grant types.</p>
                     <pre>{
-        "id": "2",
-        "name": "Automated tests",
-        "clientId": "test",
-        "clientSecret": "2aa0c27d4a452d6bbb87e1b175f8e67ce75c000f",
-        "clientSalt": "$4$3SByu9lP$nEyg3Ezxj+5BDsi8uAdwtTeU4Is$",
-        "allowCodeGrant": true,
-        "allowImplicitGrant": true,
-        "validRedirects": [
-            "http://localhost:8080/"
-        ]
-    }</pre>
+  "id": "2",
+  "name": "Automated tests",
+  "clientId": "test",
+  "clientSecret": "2aa0c27d4a452d6bbb87e1b175f8e67ce75c000f",
+  "clientSalt": "$4$3SByu9lP$nEyg3Ezxj+5BDsi8uAdwtTeU4Is$",
+  "allowCodeGrant": true,
+  "allowImplicitGrant": true,
+  "validRedirects": [
+    "http://localhost:8080/"
+  ]
+}</pre>
                     <span class="words">
                         <ul>
                             <li><code>id</code>: Unique internal client ID, which should never change</li>
@@ -436,10 +436,10 @@
                     or platforms.</p>
                     <h3>Loading</h3>
                     <p>Configuration is loaded from (in order)</p>
-                    <pre>  $NODE_CONFIG_DIR
-    |-- default.json
-    |-- $NODE_ENV.json
-    `-- runtime.json</pre>
+                    <pre>$NODE_CONFIG_DIR
+  |-- default.json
+  |-- $NODE_ENV.json
+  `-- runtime.json</pre>
                     <p><code>default.json</code> should contain the bulk of your configuration, with
                     host/environment specific overrides in <code>$NODE_ENV.json</code>. By convention
                     <code>runtime.json</code> should only be used for overrides that you've applied
