@@ -39,7 +39,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="#page-top">jlabusch.github.io</a>
+                <a class="navbar-brand" href="/">jlabusch.github.io</a>
             </div>
 
             <!-- Collect the nav links, forms, and other content for toggling -->
@@ -187,15 +187,13 @@
                     <span class="words">
                         <h4>GET /login</h4>
                         Prompts the Resource Owner for his credentials using an EJS template configured
-                        in <code>auth_server.views.login</code> (default <code>./views/login.ejs</code>)
+                        in <code>auth_server.views.login</code>
                         <h4>POST /login</h4>
                         Authenticates the Resource Owner against the Resource Server using a
-                        custom function that you'll need to define. Some examples are included in
-                        <code>./lib/resource_server.js</code>
+                        custom function that you'll need to define.
                         <h4>GET /authorize</h4>
                         Prompts the user for authorization to share their protected resources with
                         the Client site. Uses the <code>auth_server.views.dialog</code> EJS template
-                        (default <code>./views/dialog.ejs</code>)
                         <h4>POST /authorize</h4>
                         Handles the result of the user's decision. Depending on the OAuth pattern chosen
                         by the Client, this can result in an access token or an authorization code
@@ -205,7 +203,76 @@
                         <h4>GET /api/userinfo</h4>
                         Example service allowing access to protected resources based on access tokens.
                         This (and any other <code>/api/</code> services) will be highly specific to the
-                        Resource Server. Some examples are provided in <code>./lib/resource_server.js</code>
+                        Resource Server.
+                    </span>
+                    <h3>Interface - Resource Server</h3>
+                    <pre>    exports.dummy = {
+        login: function(username, password, next){
+            // Authenticate the user and call next(...)
+        },
+        query: function(req, res){
+            // Retrieve protected resource
+        }
+    };</pre>
+                    <p>The <code>login()</code> function should invoke <code>next</code> in the following ways:</p>
+                    <span class="words">
+                        <ul>
+                            <li>Login success: <code>next(null, {id: <em>UID</em>, site_token: <em>T</em>, ...})</code></li>
+                            <li>Login failure: <code>next(null, false, {message: '...'})</code></li>
+                            <li>Internal error: <code>next(err)</code></li>
+                        </ul>
+                    </span>
+                    <p>The <code>query()</code> function should use the <code>site_token</code> above (now
+                    available as <code>req.authInfo.site_token</code>) to retrieve a protected resource.</p>
+                    <p>The result should be written using the HTTP/S response argument <code>res</code>,
+                    e.g. using <code>res.json(...)</code>.
+                    <h3>Config - Resource Server</h3>
+                    <pre>    "resource_server": {
+        "type": "dummy",
+        "host": "127.0.0.1",
+        "port": 8084,
+        "basic_auth": "user:pass",
+        "user_agent": "OAuth-IdP/0.4.0"
+    }</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>type</code>: The name of an object exported from
+                            <code>./lib/resource_server.js</code></li>
+                        </ul>
+                    </span>
+                    <p>Any additional options can be defined for your own implementation of the
+                    Resource Server interface.</p>
+                    <h3>Config - Authentication Server</h3>
+                    <pre>    "auth_server": {
+        "hostname": "127.0.0.1",
+        "port": 8081,
+        "ssl": false,
+        "ssl_cert": null,
+        "ssl_key": null,
+        "session_secret": "REPLACE ME",
+        "views": {
+            "layout": "layout",
+            "login": "login",
+            "dialog": "dialog"
+        }
+    }</pre>
+                    <p>The Authentication Server portion controls the operation of the core Express webserver.</p>
+                    <span class="words">
+                        <ul>
+                            <li><code>hostname</code>: Used by automated tests to find the Express webserver</li>
+                            <li><code>port</code>: Express webserver listen port</li>
+                            <li><code>ssl</code>: Flag to toggle between HTTP and HTTPS</li>
+                            <li><code>ssl_cert</code>: SSL certificate to use (implies <code>ssl = true</code>)</li>
+                            <li><code>ssl_key</code>: SSL key file to use (implies <code>ssl = true</code>)</li>
+                            <li><code>session_secret</code>: Value used to sign session cookies</li>
+                        </ul>
+                        <p>For the EJS template files, any name <code>$X</code> is translated to the
+                        file <code>./views/$X.ejs</code>.</p>
+                        <ul>
+                            <li><code>views.layout</code>: Page foundation</li>
+                            <li><code>views.login</code>: Body of authentication page</li>
+                            <li><code>views.dialog</code>: Body of authorization page</li>
+                        </ul>
                     </span>
                 </div>
             </div>
@@ -245,9 +312,85 @@
                             <li>Storage interface: <code>./lib/store.js</code> provides interfaces to "real"
                             databases, e.g. redis-server. It's relatively easy to add support for additional
                             storage types, and to switch between them by changing config on a per-table basis
-                            (i.e. "users" and "tokens" could have different kinds of storage.)</li>
+                            (i.e. <code>users</code> and <code>tokens</code> can have different kinds of storage.)</li>
                             <li>Actual storage: Likely to vary between projects based on your specific situation
                             and requirements.</li>
+                        </ul>
+                    </span>
+                    <h3>Config - General Storage</h3>
+                    <p>General storage can be configured independently for the following logical groups:</p>
+                    <span class="words">
+                        <ul>
+                            <li><code>session</code>: User sessions</li>
+                            <li><code>codes</code>: Authorization codes</li>
+                            <li><code>tokens</code>: Access tokens</li>
+                            <li><code>users</code>: User metadata</li>
+                        </ul>
+                    </span>
+                    <p>One final type, <code>default</code>, provides a catchall.</p>
+                    <p>Out of the box, the supported storage interfaces are Redis and MemStore.</p>
+                    <pre>    "storage": {
+        "default": {
+            "type": "MemStore",
+            "host": "127.0.0.1",
+            "port": 8083
+        }
+    }</pre>
+                    <p><em>TODO: describe MemStore REST API and dummy server</em></p>
+                    <pre>    "storage": {
+        "default": {
+            "type": "Redis",
+            "db": 0,
+            "host": "127.0.0.1",
+            "port": 6379,
+            "ttl": 900,
+            "options": {}
+        }
+    }</pre>
+                    <p>Redis storage depends on the <code>redis-server</code> package (tested with 2.6.)
+                    and the Node <code>redis</code> and <code>hiredis</code> modules.</p>
+                    <span class="words">
+                        <ul>
+                            <li><code>type</code>: "Redis" corresponds to the name of an object exported from
+                            <code>./lib/store.js</code></li>
+                            <li><code>db</code>: Specific database instance</li>
+                            <li><code>host</code>: Redis server hostname</li>
+                            <li><code>port</code>: Redis server port</li>
+                            <li><code>ttl</code>: Expiry time of records (SETEX), or 0 for no expiry (SET)</li>
+                            <li><code>options</code>: Additional options to be passed to <code>redis.createClient</code></li>
+                        </ul>
+                    </span>
+                    <h3>Config - Clients</h3>
+                    <p>The list of accepted clients is stored in a JSON file on disk.</p>
+                    <pre>    "client_credentials": {
+        "file": "./clients.json"
+    }</pre>
+                    <p>Entries in the file define client credentials, redirect URIs and allowed
+                    grant types.</p>
+                    <pre>{
+        "id": "2",
+        "name": "Automated tests",
+        "clientId": "test",
+        "clientSecret": "2aa0c27d4a452d6bbb87e1b175f8e67ce75c000f",
+        "clientSalt": "$4$3SByu9lP$nEyg3Ezxj+5BDsi8uAdwtTeU4Is$",
+        "allowCodeGrant": true,
+        "allowImplicitGrant": true,
+        "validRedirects": [
+            "http://localhost:8080/"
+        ]
+    }</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>id</code>: Unique internal client ID, which should never change</li>
+                            <li><code>name</code>: Name suitable for display to user during authorization step</li>
+                            <li><code>clientId</code>: Client ID as shared with the client site</li>
+                            <li><code>clientSecret</code>: SHA-1 hash of <code>clientId:&lt;secret&gt;:clientSalt</code>
+                            We never store the clear text client secret</li>
+                            <li><code>clientSalt</code>: Any random-ish string</li>
+                            <li><code>allowCodeGrant</code>: <code>true</code> if Authorization Code Grants are allowed for this client</li>
+                            <li><code>allowImplicitGrant</code>: <code>true</code> if Implicit Grants are allowed for this client</li>
+                            <li><code>validRedirects</code>: A list of the valid redirect URIs for a client. Locking
+                            clients down by redirect URI is a vital layer of protection against abuse.</li>
                         </ul>
                     </span>
                 </div>
@@ -276,6 +419,38 @@
             </div>
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2">
+                    <p>The application's configuration system was designed with a couple of goals in mind:</p>
+                    <span class="words">
+                        <ul>
+                            <li>It should support runtime reloading for at least some options (e.g. log levels)</li>
+                            <li>It should be easy to override options based on your environment (e.g. dev/test/prod)</li>
+                        </ul>
+                    </span>
+                    <h3>Environment Variables</h3>
+                    <pre>export NODE_CONFIG_DIR=${NODE_CONFIG_DIR:=config}</pre>
+                    <p>Use <code>NODE_CONFIG_DIR</code> to change where the application looks for
+                    its configuration files. For production use this should probably be somewhere in
+                    <code>/etc/</code>.</p>
+                    <pre>export NODE_ENV=${NODE_ENV:=development}</pre>
+                    <p>Use <code>NODE_ENV</code> to load configuration overrides for particular hosts
+                    or platforms.</p>
+                    <h3>Loading</h3>
+                    <p>Configuration is loaded from (in order)</p>
+                    <pre>  $NODE_CONFIG_DIR
+    |-- default.json
+    |-- $NODE_ENV.json
+    `-- runtime.json</pre>
+                    <p><code>default.json</code> should contain the bulk of your configuration, with
+                    host/environment specific overrides in <code>$NODE_ENV.json</code>. By convention
+                    <code>runtime.json</code> should only be used for overrides that you've applied
+                    manually, i.e. outside of a proper deployment cycle, but in reality a config reload
+                    will parse all three files, not just the latter.</p>
+                    <p>Configuration can be reloaded at runtime by sending a SIGHUP to the parent process.
+                    After the configuration is reloaded it emits a <code>loaded</code> event.</p>
+                    <p>In general configuration is either used once on startup and never again (e.g.
+                    webserver listen port) or accessed at runtime through <code>config.get()</code>,
+                    which always accesses the most recently loaded value (e.g. log levels).
+
                 </div>
             </div>
         </div>

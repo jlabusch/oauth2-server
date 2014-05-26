@@ -115,6 +115,7 @@ header .intro-text .skills {
     }
 
     header .intro-text .name {
+        padding-top: 50px;
         font-size: 5em;
     }
 
