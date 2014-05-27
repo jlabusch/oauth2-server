@@ -414,7 +414,7 @@
                             <li><code>id</code>: Unique internal client ID, which should never change</li>
                             <li><code>name</code>: Name suitable for display to user during authorization step</li>
                             <li><code>clientId</code>: Client ID as shared with the client site</li>
-                            <li><code>clientSecret</code>: SHA-1 hash of <code>clientId:&lt;secret&gt;:clientSalt</code>
+                            <li><code>clientSecret</code>: SHA-1 hash of <code>clientId:&lt;secret&gt;:clientSalt</code>.
                             We never store the clear text client secret</li>
                             <li><code>clientSalt</code>: Any random-ish string</li>
                             <li><code>allowCodeGrant</code>: <code>true</code> if Authorization Code Grants are allowed for this client</li>
