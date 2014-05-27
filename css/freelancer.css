@@ -38,6 +38,8 @@ h6 {
 }
 
 hr.star-light,
+hr.star-tertiary,
+hr.star-secondary,
 hr.star-primary {
     margin: 25px auto 30px;
     padding: 0;
@@ -48,6 +50,8 @@ hr.star-primary {
 }
 
 hr.star-light:after,
+hr.star-tertiary:after,
+hr.star-secondary:after,
 hr.star-primary:after {
     content: "\f005";
     display: inline-block;
@@ -67,13 +71,31 @@ hr.star-light:after {
     background-color: #3b373a;
 }
 
+hr.star-tertiary {
+    border-color: #fff;
+}
+
+hr.star-tertiary:after {
+    color: #fff;
+    background-color: #36474d;
+}
+
+hr.star-secondary {
+    border-color: #fff;
+}
+
+hr.star-secondary:after {
+    color: #fff;
+    background-color: #a2ae85;
+}
+
 hr.star-primary {
     border-color: #36474d;
 }
 
 hr.star-primary:after {
     color: #36474d;
-    background-color: #fff;
+    background-color: #f1ffe0;
 }
 
 .img-centered {
@@ -173,6 +195,7 @@ header .intro-text .skills {
 
 section {
     padding: 100px 0;
+    background: #f1ffe0;
 }
 
 section h2 {
@@ -180,9 +203,19 @@ section h2 {
     font-size: 3em;
 }
 
-section.success {
+section.t_light {
     color: #fff;
     background: #3b373a;
+}
+
+section.t_tertiary {
+    color: #fff;
+    background: #36474d;
+}
+
+section.t_secondary {
+    color: #fff;
+    background: #a2ae85;
 }
 
 @media(max-width:767px) {
@@ -288,7 +321,7 @@ footer .footer-col {
 
 footer .footer-below {
     padding: 25px 0;
-    background-color: #233140;
+    background-color: #3b373a;
 }
 
 .btn-social {

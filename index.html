@@ -48,15 +48,10 @@
                     <li class="hidden">
                         <a href="#page-top"></a>
                     </li>
-                    <li class="page-scroll"><a href="#getting-started">Getting Started</a></li>
-                    <li class="page-scroll"><a href="#arch-1">OAuth 2.0 Primer</a></li>
-                    <li class="page-scroll"><a href="#arch-2">Architecture</a></li>
-                    <li class="page-scroll"><a href="#arch-webserver">Express Webserver</a></li>
-                    <li class="page-scroll"><a href="#arch-db">DB &amp; Storage</a></li>
-                    <li class="page-scroll"><a href="#arch-logging">Logging</a></li>
-                    <li class="page-scroll"><a href="#arch-config">Configuration</a></li>
-                    <li class="page-scroll"><a href="#testing">Testing</a></li>
-                    <li class="page-scroll"><a href="#contact">Contact</a></li>
+                    <li class="page-scroll"><a href="#s-about">About</a></li>
+                    <li class="page-scroll"><a href="#s-primer">OAuth 2.0 Primer</a></li>
+                    <li class="page-scroll"><a href="#s-comp">Components</a></li>
+                    <li class="page-scroll"><a href="#s-auth">Auth Server</a></li>
                 </ul>
             </div>
             <!-- /.navbar-collapse -->
@@ -68,33 +63,48 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
+                    <img class="img-responsive" src="img/profile.png" style="max-width:256px;" alt="">
                     <div class="intro-text">
                         <span class="name">OAuth 2.0 Server</span>
                         <hr class="star-light">
+                        <span class="skills">Free &mdash; Open &mdash; Simple</span>
                     </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-lg-8 col-lg-offset-2 text-left">
-                    <p>This OAuth 2.0 server is based on <a href="https://github.com/jaredhanson">Jared Hanson's</a>
-                    Passport and Oauth2orize modules. Its primary focus is the Authentication Code Grant and
-                    Implicit Grant patterns described in <a href="http://tools.ietf.org/html/rfc6749">RFC 6749</a>.</p>
-                    <p><a href="http://passportjs.org/">Passport</a> provides a good framework for authentication
-                    in Node &mdash; This project is not about reinventing that wheel, or providing just a bit of
-                    syntactic sugar;</p>
-                    <p>The point of this project is to provide an essentially production-ready application with
-                    enough supporting documentation to allow you to easily evaluate (a) whether it does
-                    what you need, and (b) which bits are likely to benefit from further customization.</p>
                 </div>
             </div>
         </div>
     </header>
 
-    <section id="getting-started">
+    <section class="t_secondary" id="s-about">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2>About</h2>
+                    <hr class="star-secondary">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 text-left">
+                    <p>This OAuth 2.0 server is based on <a href="https://github.com/jaredhanson">Jared Hanson's</a>
+                    <a href="http://passportjs.org/">Passport</a> and <a href="https://github.com/jaredhanson/oauth2orize">Oauth2orize</a>
+                    modules. Its primary focus is the Authentication Code Grant and
+                    Implicit Grant patterns described in <a href="http://tools.ietf.org/html/rfc6749">RFC 6749</a>.</p>
+                    <p>Passport provides a good framework for authentication
+                    in Node &mdash; This project is not about reinventing that wheel, or providing just a bit of
+                    syntactic sugar;</p>
+                    <p>The point of this project is to provide an essentially production-ready application with
+                    enough supporting documentation to allow you to easily evaluate (a) whether it does
+                    what you need, and (b) which bits are likely to benefit from further customization.</p>
+                    <p>The source code is freely available under the GNU General Public License.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="t_tertiary" id="s-started">
         <div class="container">
             <div class="row text-center">
                 <h2>Getting Started</h2>
-                <hr class="star-primary">
+                <hr class="star-tertiary">
             </div>
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2">
@@ -115,11 +125,11 @@
         </div>
     </section>
 
-    <section class="success" id="arch-1">
+    <section class="t_primary" id="s-primer">
         <div class="container">
             <div class="row text-center">
                 <h2>OAuth 2.0 Primer</h2>
-                <hr class="star-light">
+                <hr class="star-primary">
             </div>
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2">
@@ -152,11 +162,13 @@
         </div>
     </section>
 
-    <section id="arch-2">
+    <section class="t_secondary" id="s-comp">
         <div class="container">
-            <div class="row text-center">
-                <h2>Architecture</h2>
-                <hr class="star-primary">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2>Components</h2>
+                    <hr class="star-secondary">
+                </div>
             </div>
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2">
@@ -171,11 +183,11 @@
         </div>
     </section>
 
-    <section class="success" id="arch-webserver">
+    <section class="t_primary" id="s-auth">
         <div class="container">
             <div class="row text-center">
-                <h2>Express Webserver</h2>
-                <hr class="star-light">
+                <h2>Authorization Server</h2>
+                <hr class="star-primary">
             </div>
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2">
@@ -205,43 +217,6 @@
                         This (and any other <code>/api/</code> services) will be highly specific to the
                         Resource Server.
                     </span>
-                    <h3>Interface - Resource Server</h3>
-                    <pre>exports.dummy = {
-  login: function(username, password, next){
-    // Authenticate the user and call next(...)
-  },
-  query: function(req, res){
-    // Retrieve protected resource
-  }
-}</pre>
-                    <p>The <code>login()</code> function should invoke <code>next</code> in the following ways:</p>
-                    <span class="words">
-                        <ul>
-                            <li>Login success: <code>next(null, {id: <em>UID</em>, site_token: <em>T</em>, ...})</code></li>
-                            <li>Login failure: <code>next(null, false, {message: '...'})</code></li>
-                            <li>Internal error: <code>next(err)</code></li>
-                        </ul>
-                    </span>
-                    <p>The <code>query()</code> function should use the <code>site_token</code> above (now
-                    available as <code>req.authInfo.site_token</code>) to retrieve a protected resource.</p>
-                    <p>The result should be written using the HTTP/S response argument <code>res</code>,
-                    e.g. using <code>res.json(...)</code>.
-                    <h3>Config - Resource Server</h3>
-                    <pre>"resource_server": {
-  "type": "dummy",
-  "host": "127.0.0.1",
-  "port": 8084,
-  "basic_auth": "user:pass",
-  "user_agent": "OAuth-IdP/0.4.0"
-}</pre>
-                    <span class="words">
-                        <ul>
-                            <li><code>type</code>: The name of an object exported from
-                            <code>./lib/resource_server.js</code></li>
-                        </ul>
-                    </span>
-                    <p>Any additional options can be defined for your own implementation of the
-                    Resource Server interface.</p>
                     <h3>Config - Authentication Server</h3>
                     <pre>"auth_server": {
   "hostname": "127.0.0.1",
@@ -279,11 +254,67 @@
         </div>
     </section>
 
-    <section id="arch-db">
+    <section class="t_secondary" id="s-resource">
+        <div class="container">
+            <div class="row text-center">
+                <h2>Resource Server</h2>
+                <hr class="star-secondary">
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h3>Interface - Resource Server</h3>
+                    <p>In <code>./lib/resource_server.js</code>:</p>
+                    <pre>exports.MyResourceServerInterface = {
+  login: function(username, password, next){
+    // Authenticate the user and call next(...)
+  },
+  query: function(req, res){
+    // Retrieve protected resource
+  }
+}</pre>
+                    <p>The <code>login()</code> function should invoke <code>next</code> in the following ways:</p>
+                    <span class="words">
+                        <ul>
+                            <li>Login success: <code>next(null, {id: <em>UID</em>, site_token: <em>T</em>, ...})</code></li>
+                            <li>Login failure: <code>next(null, false, {message: '...'})</code></li>
+                            <li>Internal error: <code>next(err)</code></li>
+                        </ul>
+                    </span>
+                    <p>The <code>query()</code> function should use the <code>site_token</code> above (now
+                    available as <code>req.authInfo.site_token</code>) to retrieve a protected resource.</p>
+                    <p>The result should be written using the HTTP/S response argument <code>res</code>,
+                    e.g. using <code>res.json(...)</code>.
+                    <h3>Config - Resource Server</h3>
+                    <pre>"resource_server": {
+  "type": "dummy",
+  "host": "127.0.0.1",
+  "port": 8084,
+  "basic_auth": "user:pass",
+  "user_agent": "OAuth-IdP/0.4.0"
+}</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>type</code>: The name of an object exported from
+                            <code>./lib/resource_server.js</code></li>
+                        </ul>
+                    </span>
+                    <p>Any additional options can be defined for your own implementation of the
+                    Resource Server interface.</p>
+                    <p>See also the stub server in
+                    <code>./dummy-servers/resource_server.js</code>, which is started automatically
+                    via <code>npm start</code> when the configured type is <code>dummy</code>.</p>
+                    <p>For a real world interface example, see the <code>stuff_nation</code> type
+                    in <code>./lib/resource_server.js</code>.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="t_light" id="s-db">
         <div class="container">
             <div class="row text-center">
                 <h2>DB &amp; Storage</h2>
-                <hr class="star-primary">
+                <hr class="star-light">
             </div>
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2">
@@ -398,24 +429,11 @@
         </div>
     </section>
 
-    <section class="success" id="arch-logging">
-        <div class="container">
-            <div class="row text-center">
-                <h2>Logging</h2>
-                <hr class="star-light">
-            </div>
-            <div class="row">
-                <div class="col-lg-8 col-lg-offset-2">
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="arch-config">
+    <section class="t_secondary" id="s-conf">
         <div class="container">
             <div class="row text-center">
                 <h2>Configuration</h2>
-                <hr class="star-primary">
+                <hr class="star-secondary">
             </div>
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2">
@@ -450,48 +468,27 @@
                     <p>In general configuration is either used once on startup and never again (e.g.
                     webserver listen port) or accessed at runtime through <code>config.get()</code>,
                     which always accesses the most recently loaded value (e.g. log levels).
-
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="success" id="testing">
-        <div class="container">
-            <div class="row text-center">
-                <h2>Testing</h2>
-                <hr class="star-light">
-            </div>
-            <div class="row">
-                <div class="col-lg-8 col-lg-offset-2">
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <footer class="text-center" id="contact">
+    <footer class="text-center">
         <div class="footer-above">
             <div class="container">
                 <div class="row">
                     <div class="footer-col col-md-4">
-                        <h3>Location</h3>
-                        <p>Wellington,<br>
-                           New Zealand</p>
                     </div>
                     <div class="footer-col col-md-4">
-                    </div>
-                    <div class="footer-col col-md-4">
-                        <h3>Around the Web</h3>
+                        <h3>Contact Me</h3>
                         <ul class="list-inline">
-                            <li><a href="https://github.com/jlabusch" class="btn-social btn-outline"><i class="fa fa-fw fa-github"></i></a>
-                            </li>
-                            <li><a href="https://plus.google.com/113154189645874995686" class="btn-social btn-outline"><i class="fa fa-fw fa-google-plus"></i></a>
-                            </li>
-                            <li><a href="https://twitter.com/jlabusch" class="btn-social btn-outline"><i class="fa fa-fw fa-twitter"></i></a>
-                            </li>
-                            <li><a href="http://nz.linkedin.com/pub/jacques-labuschagne/0/47a/512/" class="btn-social btn-outline"><i class="fa fa-fw fa-linkedin"></i></a>
-                            </li>
+                            <li><a href="https://github.com/jlabusch" class="btn-social btn-outline"><i class="fa fa-fw fa-github"></i></a></li>
+                            <li><a href="https://plus.google.com/113154189645874995686" class="btn-social btn-outline"><i class="fa fa-fw fa-google-plus"></i></a></li>
+                            <li><a href="https://twitter.com/jlabusch" class="btn-social btn-outline"><i class="fa fa-fw fa-twitter"></i></a></li>
+                            <li><a href="http://nz.linkedin.com/pub/jacques-labuschagne/0/47a/512/" class="btn-social btn-outline"><i class="fa fa-fw fa-linkedin"></i></a></li>
                         </ul>
+                    </div>
+                    <div class="footer-col col-md-4">
                     </div>
                 </div>
             </div>
@@ -511,6 +508,194 @@
         <a class="btn btn-primary" href="#page-top">
             <i class="fa fa-chevron-up"></i>
         </a>
+    </div>
+
+    <!-- Portfolio Modals -->
+    <div class="portfolio-modal modal fade" id="portfolioModal1" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-content">
+            <div class="close-modal" data-dismiss="modal">
+                <div class="lr">
+                    <div class="rl">
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 col-lg-offset-2">
+                        <div class="modal-body">
+                            <h2>Project Title</h2>
+                            <hr class="star-primary">
+                            <img src="img/portfolio/cabin.png" class="img-responsive img-centered" alt="">
+                            <p>Use this area of the page to describe your project. The icon above is part of a free icon set by <a href="https://sellfy.com/p/8Q9P/jV3VZ/">Flat Icons</a>. On their website, you can download their free set with 16 icons, or you can purchase the entire set with 146 icons for only $12!</p>
+                            <ul class="list-inline item-details">
+                                <li>Client: <strong><a href="http://startbootstrap.com">Start Bootstrap</a></strong>
+                                </li>
+                                <li>Date: <strong><a href="http://startbootstrap.com">April 2014</a></strong>
+                                </li>
+                                <li>Service: <strong><a href="http://startbootstrap.com">Web Development</a></strong>
+                                </li>
+                            </ul>
+                            <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="portfolio-modal modal fade" id="portfolioModal2" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-content">
+            <div class="close-modal" data-dismiss="modal">
+                <div class="lr">
+                    <div class="rl">
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 col-lg-offset-2">
+                        <div class="modal-body">
+                            <h2>Project Title</h2>
+                            <hr class="star-primary">
+                            <img src="img/portfolio/cake.png" class="img-responsive img-centered" alt="">
+                            <p>Use this area of the page to describe your project. The icon above is part of a free icon set by <a href="https://sellfy.com/p/8Q9P/jV3VZ/">Flat Icons</a>. On their website, you can download their free set with 16 icons, or you can purchase the entire set with 146 icons for only $12!</p>
+                            <ul class="list-inline item-details">
+                                <li>Client: <strong><a href="http://startbootstrap.com">Start Bootstrap</a></strong>
+                                </li>
+                                <li>Date: <strong><a href="http://startbootstrap.com">April 2014</a></strong>
+                                </li>
+                                <li>Service: <strong><a href="http://startbootstrap.com">Web Development</a></strong>
+                                </li>
+                            </ul>
+                            <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="portfolio-modal modal fade" id="portfolioModal3" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-content">
+            <div class="close-modal" data-dismiss="modal">
+                <div class="lr">
+                    <div class="rl">
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 col-lg-offset-2">
+                        <div class="modal-body">
+                            <h2>Project Title</h2>
+                            <hr class="star-primary">
+                            <img src="img/portfolio/circus.png" class="img-responsive img-centered" alt="">
+                            <p>Use this area of the page to describe your project. The icon above is part of a free icon set by <a href="https://sellfy.com/p/8Q9P/jV3VZ/">Flat Icons</a>. On their website, you can download their free set with 16 icons, or you can purchase the entire set with 146 icons for only $12!</p>
+                            <ul class="list-inline item-details">
+                                <li>Client: <strong><a href="http://startbootstrap.com">Start Bootstrap</a></strong>
+                                </li>
+                                <li>Date: <strong><a href="http://startbootstrap.com">April 2014</a></strong>
+                                </li>
+                                <li>Service: <strong><a href="http://startbootstrap.com">Web Development</a></strong>
+                                </li>
+                            </ul>
+                            <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="portfolio-modal modal fade" id="portfolioModal4" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-content">
+            <div class="close-modal" data-dismiss="modal">
+                <div class="lr">
+                    <div class="rl">
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 col-lg-offset-2">
+                        <div class="modal-body">
+                            <h2>Project Title</h2>
+                            <hr class="star-primary">
+                            <img src="img/portfolio/game.png" class="img-responsive img-centered" alt="">
+                            <p>Use this area of the page to describe your project. The icon above is part of a free icon set by <a href="https://sellfy.com/p/8Q9P/jV3VZ/">Flat Icons</a>. On their website, you can download their free set with 16 icons, or you can purchase the entire set with 146 icons for only $12!</p>
+                            <ul class="list-inline item-details">
+                                <li>Client: <strong><a href="http://startbootstrap.com">Start Bootstrap</a></strong>
+                                </li>
+                                <li>Date: <strong><a href="http://startbootstrap.com">April 2014</a></strong>
+                                </li>
+                                <li>Service: <strong><a href="http://startbootstrap.com">Web Development</a></strong>
+                                </li>
+                            </ul>
+                            <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="portfolio-modal modal fade" id="portfolioModal5" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-content">
+            <div class="close-modal" data-dismiss="modal">
+                <div class="lr">
+                    <div class="rl">
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 col-lg-offset-2">
+                        <div class="modal-body">
+                            <h2>Project Title</h2>
+                            <hr class="star-primary">
+                            <img src="img/portfolio/safe.png" class="img-responsive img-centered" alt="">
+                            <p>Use this area of the page to describe your project. The icon above is part of a free icon set by <a href="https://sellfy.com/p/8Q9P/jV3VZ/">Flat Icons</a>. On their website, you can download their free set with 16 icons, or you can purchase the entire set with 146 icons for only $12!</p>
+                            <ul class="list-inline item-details">
+                                <li>Client: <strong><a href="http://startbootstrap.com">Start Bootstrap</a></strong>
+                                </li>
+                                <li>Date: <strong><a href="http://startbootstrap.com">April 2014</a></strong>
+                                </li>
+                                <li>Service: <strong><a href="http://startbootstrap.com">Web Development</a></strong>
+                                </li>
+                            </ul>
+                            <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="portfolio-modal modal fade" id="portfolioModal6" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-content">
+            <div class="close-modal" data-dismiss="modal">
+                <div class="lr">
+                    <div class="rl">
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 col-lg-offset-2">
+                        <div class="modal-body">
+                            <h2>Project Title</h2>
+                            <hr class="star-primary">
+                            <img src="img/portfolio/submarine.png" class="img-responsive img-centered" alt="">
+                            <p>Use this area of the page to describe your project. The icon above is part of a free icon set by <a href="https://sellfy.com/p/8Q9P/jV3VZ/">Flat Icons</a>. On their website, you can download their free set with 16 icons, or you can purchase the entire set with 146 icons for only $12!</p>
+                            <ul class="list-inline item-details">
+                                <li>Client: <strong><a href="http://startbootstrap.com">Start Bootstrap</a></strong>
+                                </li>
+                                <li>Date: <strong><a href="http://startbootstrap.com">April 2014</a></strong>
+                                </li>
+                                <li>Service: <strong><a href="http://startbootstrap.com">Web Development</a></strong>
+                                </li>
+                            </ul>
+                            <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="js/jquery-1.10.2.js"></script>
