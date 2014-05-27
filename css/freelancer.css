@@ -6,12 +6,12 @@ p {
     font-size: 20px;
 }
 
-span.words {
-    font-size: 20px;
-}
-
 p.small {
     font-size: 16px;
+}
+
+span.words {
+    font-size: 20px;
 }
 
 a,
@@ -20,7 +20,7 @@ a:focus,
 a:active,
 a.active {
     outline: 0;
-    color: #2c3e50;
+    color: #3b373a;
 }
 
 h1,
@@ -59,20 +59,20 @@ hr.star-primary:after {
 }
 
 hr.star-light {
-    border-color: #203c47;
+    border-color: #fff;
 }
 
 hr.star-light:after {
-    color: #203c47;
-    background-color: #eceabe;
+    color: #fff;
+    background-color: #3b373a;
 }
 
 hr.star-primary {
-    border-color: #2c3e50;
+    border-color: #36474d;
 }
 
 hr.star-primary:after {
-    color: #2c3e50;
+    color: #36474d;
     background-color: #fff;
 }
 
@@ -82,18 +82,19 @@ hr.star-primary:after {
 
 header {
     text-align: center;
-    color: #203c47;
-    background: #eceabe;
+    color: #fff;
+    background: #3b373a;
 }
 
 header .container {
     padding-top: 100px;
-    padding-bottom: 25px;
+    padding-bottom: 50px;
 }
 
 header img {
     display: block;
     margin: 0 auto 20px;
+    max-width: 254px;
 }
 
 header .intro-text .name {
@@ -111,11 +112,10 @@ header .intro-text .skills {
 
 @media(min-width:768px) {
     header .container {
-        padding: 200px 0 50px;
+        padding: 200px 0 100px;
     }
 
     header .intro-text .name {
-        padding-top: 50px;
         font-size: 5em;
     }
 
@@ -145,26 +145,6 @@ header .intro-text .skills {
 
     .navbar-fixed-top.navbar-shrink .navbar-brand {
         font-size: 1.5em;
-        padding-top: 5px;
-        padding-bottom: 5px;
-        line-height: 1.0;
-    }
-
-    .navbar-fixed-top.navbar-shrink .navbar-header {
-    }
-
-    .navbar-fixed-top a {
-        -webkit-transition: all .3s;
-        -moz-transition: all .3s;
-        transition: all .3s;
-    }
-
-    .navbar-fixed-top.navbar-shrink a {
-        padding-top: 5px;
-        padding-bottom: 5px;
-    }
-    .navbar-fixed-top.navbar-shrink .navbar-right a {
-        display:none;
     }
 }
 
@@ -192,8 +172,7 @@ header .intro-text .skills {
 }
 
 section {
-    padding: 50px 0px 100px 0px;
-    background: #fff;
+    padding: 100px 0;
 }
 
 section h2 {
@@ -202,8 +181,8 @@ section h2 {
 }
 
 section.success {
-    color: #203c47;
-    background: #eceabe;
+    color: #fff;
+    background: #3b373a;
 }
 
 @media(max-width:767px) {
@@ -230,7 +209,7 @@ section.success {
 .btn-outline:active,
 .btn-outline.active {
     border: solid 2px #fff;
-    color: #eceabe;
+    color: #3b373a;
     background: #fff;
 }
 
@@ -283,7 +262,7 @@ section.success {
 }
 
 .floating-label-form-group-with-focus label {
-    color: #eceabe;
+    color: #3b373a;
 }
 
 form .row:first-child .floating-label-form-group {
@@ -300,7 +279,7 @@ footer h3 {
 
 footer .footer-above {
     padding-top: 50px;
-    background-color: #2c3e50;
+    background-color: #36474d;
 }
 
 footer .footer-col {
