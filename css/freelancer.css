@@ -208,6 +208,10 @@ section.t_light {
     background: #3b373a;
 }
 
+.t_light a {
+    color: #f1ffe0;
+}
+
 section.t_tertiary {
     color: #fff;
     background: #36474d;
