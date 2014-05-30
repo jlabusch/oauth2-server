@@ -323,6 +323,7 @@
                             <li>User sessions</li>
                             <li>Authorization codes</li>
                             <li>Access tokens</li>
+                            <li>Refresh tokens</li>
                             <li>Client site metadata (JSON file; see <code>./clients.json.example</code>)</li>
                             <li>User metadata (not exposed to Client sites)</li>
                         </ul>
@@ -354,6 +355,7 @@
                             <li><code>session</code>: User sessions</li>
                             <li><code>codes</code>: Authorization codes</li>
                             <li><code>tokens</code>: Access tokens</li>
+                            <li><code>refresh_tokens</code>: Refresh tokens</li>
                             <li><code>users</code>: User metadata</li>
                         </ul>
                     </span>
@@ -400,12 +402,12 @@
                     <pre>{
   "id": "2",
   "name": "Automated tests",
-  "clientId": "test",
-  "clientSecret": "2aa0c27d4a452d6bbb87e1b175f8e67ce75c000f",
-  "clientSalt": "$4$3SByu9lP$nEyg3Ezxj+5BDsi8uAdwtTeU4Is$",
-  "allowCodeGrant": true,
-  "allowImplicitGrant": true,
-  "validRedirects": [
+  "client_id": "test",
+  "client_secret": "2aa0c27d4a452d6bbb87e1b175f8e67ce75c000f",
+  "client_salt": "$4$3SByu9lP$nEyg3Ezxj+5BDsi8uAdwtTeU4Is$",
+  "allow_code_grant": true,
+  "allow_implicit_grant": true,
+  "valid_redirects": [
     "http://localhost:8080/"
   ]
 }</pre>
@@ -413,13 +415,13 @@
                         <ul>
                             <li><code>id</code>: Unique internal client ID, which should never change</li>
                             <li><code>name</code>: Name suitable for display to user during authorization step</li>
-                            <li><code>clientId</code>: Client ID as shared with the client site</li>
-                            <li><code>clientSecret</code>: SHA-1 hash of <code>clientId:&lt;secret&gt;:clientSalt</code>.
+                            <li><code>client_id</code>: Client ID as shared with the client site</li>
+                            <li><code>client_secret</code>: SHA-1 hash of <code>client_id:&lt;secret&gt;:client_salt</code>.
                             We never store the clear text client secret</li>
-                            <li><code>clientSalt</code>: Any random-ish string</li>
-                            <li><code>allowCodeGrant</code>: <code>true</code> if Authorization Code Grants are allowed for this client</li>
-                            <li><code>allowImplicitGrant</code>: <code>true</code> if Implicit Grants are allowed for this client</li>
-                            <li><code>validRedirects</code>: A list of the valid redirect URIs for a client. Locking
+                            <li><code>client_salt</code>: Any random-ish string</li>
+                            <li><code>allow_code_grant</code>: <code>true</code> if Authorization Code Grants are allowed for this client</li>
+                            <li><code>allow_implicit_grant</code>: <code>true</code> if Implicit Grants are allowed for this client</li>
+                            <li><code>valid_redirects</code>: A list of the valid redirect URIs for a client. Locking
                             clients down by redirect URI is a vital layer of protection against abuse.</li>
                         </ul>
                     </span>
