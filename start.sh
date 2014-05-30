@@ -1,7 +1,11 @@
 #!/bin/bash
 
 export NODE_CONFIG_DIR=${NODE_CONFIG_DIR:=config}
-export NODE_ENV=${NODE_ENV:=development}
+NODE_ENV=${NODE_ENV:=development}
+if [ -n "$1" ]; then
+    NODE_ENV=$1
+fi
+export NODE_ENV
 
 echo "Environment: $NODE_ENV"
 

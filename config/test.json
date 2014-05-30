@@ -1,0 +1,15 @@
+{
+    "client_credentials": {
+        "file": "./clients.json.example"
+    },
+    "resource_server": {
+        "type": "dummy",
+        "host": "127.0.0.1",
+        "port": 8084,
+        "user_agent": "OAuth-IdP/0.4.0"
+    },
+    "logging": {
+        "level": "info",
+        "short_sid": true
+    }
+}
