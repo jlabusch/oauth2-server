@@ -7,7 +7,7 @@ storage.create('tokens', function(err, obj){
     store = obj;
 });
 
-function rtok(u, c){
+function index_key(u, c){
     return 'u:' + u + ':c:' + c;
 }
 
@@ -16,7 +16,7 @@ exports.find = function(token, done){
 };
 
 exports.find_by_user = function(userID, clientID, done){
-    store.get(rtok(userID, clientID), done);
+    store.get(index_key(userID, clientID), done);
 };
 
 exports.save = function(token, userID, clientID, done){
@@ -29,7 +29,7 @@ exports.save = function(token, userID, clientID, done){
 };
 
 exports.revoke = function(userID, clientID, done){
-    var reverse_lookup = rtok(userID, clientID);
+    var reverse_lookup = index_key(userID, clientID);
     store.get(reverse_lookup, function(err, token){
         if (err){
             return done(err);

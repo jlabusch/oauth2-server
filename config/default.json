@@ -17,9 +17,28 @@
     },
     "storage": {
         "default": {
-            "type": "MemStore",
+            "type": "Redis",
+            "db": 1,
             "host": "127.0.0.1",
-            "port": 8083
+            "port": 6379,
+            "ttl": 0,
+            "options": {}
+        },
+        "tokens": {
+            "type": "Redis",
+            "db": 0,
+            "host": "127.0.0.1",
+            "port": 6379,
+            "ttl": 604800,
+            "options": {}
+        },
+        "session": {
+            "type": "Redis",
+            "db": 0,
+            "host": "127.0.0.1",
+            "port": 6379,
+            "ttl": 1800,
+            "options": {}
         }
     },
     "resource_server": {
