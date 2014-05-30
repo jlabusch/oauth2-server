@@ -141,8 +141,9 @@ var validate = {
 };
 
 describe('auth code grant', function(){
-    var sp_redirect_uri = 'http://localhost:8080/';
-    var sp_link_params = encodeURI('response_type=code&client_id=sp-demo&redirect_uri=' + sp_redirect_uri + '&state=deadbeef');
+    var sp_redirect_uri = 'http://localhost:8080/',
+        sp_link_params =     encodeURI('response_type=code&client_id=sp-demo&redirect_uri=' + sp_redirect_uri + '&state=deadbeef'),
+        sp_link_params_alt = encodeURI('response_type=code&client_id=test&redirect_uri=' + sp_redirect_uri + '&state=deadbeef');
 
     var basic_flow_user = null;
     describe('basic flow', function(){
@@ -182,6 +183,52 @@ describe('auth code grant', function(){
             u1.a.get(host + '/api/userinfo')
                 .set('Authorization', 'Bearer ' + u1.token)
                 .end(validate.api_access(u1, done));
+        });
+    });
+    var basic_flow_user_alt = null;
+    describe('basic flow', function(){
+        var u1 = make_user();
+        basic_flow_user_alt = u1;
+
+        it('should redir to /login', function(done){
+            u1.a.get(host + '/authorize?' + sp_link_params_alt)
+                .end(validate.challenge(u1, done));
+        });
+        it('should auth and prompt for consent', function(done){
+            this.timeout(10*1000);
+            u1.a.post(host + '/login')
+                .send({username: 'em_test@tdc-design.com.x', password: good_password})
+                .end(validate.consent(u1, sp_link_params_alt, done));
+        });
+        it('should consent and redir to client with code', function(done){
+            this.timeout(5*1000);
+            u1.a.post(host + '/authorize')
+                .send({transaction_id: u1.txn})
+                .redirects(0)
+                .end(validate.code(u1, sp_redirect_uri, done));
+        });
+        it('should exchange code for token', function(done){
+            make_user().a.post(host + '/token')
+                         .send({
+                            grant_type: 'authorization_code',
+                            code: u1.code,
+                            client_id: 'test',
+                            client_secret: 'hunter2',
+                            redirect_uri: sp_redirect_uri
+                         })
+                         .end(validate.token(u1, done, true));
+        });
+        it('should allow API access', function(done){
+            u1.a.get(host + '/api/userinfo')
+                .set('Authorization', 'Bearer ' + u1.token)
+                .end(validate.api_access(u1, done));
+        });
+    });
+    describe('multiple client sanity check', function(){
+        it('should have issued different tokens to different clients', function(){
+            should.exist(basic_flow_user.token);
+            should.exist(basic_flow_user_alt.token);
+            basic_flow_user.token.should.not.equal(basic_flow_user_alt.token);
         });
     });
     describe('code redemption', function(){

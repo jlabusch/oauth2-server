@@ -46,13 +46,13 @@ function client_id_auth(strategy_name){
             }
             var sha = crypto.createHash('sha1'),
                 hash = null;
-            sha.update(client.clientId + ':' + secret + ':' + client.clientSalt);
+            sha.update(client.client_id + ':' + secret + ':' + client.client_salt);
             try{
                 hash = sha.digest('hex');
             }catch(ex){
                 log('error', 'Exception while calculating client secret hash - ' + ex);
             }
-            if (client.clientSecret != hash){
+            if (client.client_secret != hash){
                 log('warn', "couldn't authenticate client with " + strategy_name + "Strategy: bad secret");
                 return done(null, false);
             }

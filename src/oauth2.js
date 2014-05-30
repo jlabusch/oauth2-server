@@ -51,8 +51,8 @@ server.deserializeClient(function(id, done){
 // values, and will be exchanged for an access token.
 
 server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, done){
-    if (client.allowCodeGrant !== true){
-        log('warn', 'Code grant not allowed for client ' + client.id + ' (' + client.clientId + ')');
+    if (client.allow_code_grant !== true){
+        log('warn', 'Code grant not allowed for client ' + client.id + ' (' + client.client_id + ')');
         return done('Authorization Code Grant not allowed for this Client');
     }
 
@@ -71,8 +71,8 @@ server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, do
 // their response. The application issues an access token.
 
 server.grant(oauth2orize.grant.token(function(client, user, ares, done){
-    if (client.allowImplicitGrant !== true){
-        log('warn', 'Implicit grant not allowed for client ' + client.id + ' (' + client.clientId + ')');
+    if (client.allow_implicit_grant !== true){
+        log('warn', 'Implicit grant not allowed for client ' + client.id + ' (' + client.client_id + ')');
         return done('Implicit Grant not allowed for this Client');
     }
     db.accessTokens.find_by_user(user.id, client.id, function(err, token){
@@ -117,7 +117,7 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
         }else if (client.id !== authCode.clientID){
             log('warn', "couldn't exchange code " + shorten(code) + ' for client ' + client.id + ", that code is allocated to client " + authCode.clientID);
             ok = false;
-        }else if (client.allowCodeGrant !== true){
+        }else if (client.allow_code_grant !== true){
             log('warn', "couldn't exchange code " + shorten(code) + ' for client ' + client.id + ": config disabled");
             ok = false;
         }else if (redirectURI !== authCode.redirectURI){
@@ -188,8 +188,8 @@ exports.authorization = [
                 log('warn', 'Invalid redirect client ID ' + clientID);
                 return done('Invalid client ID');
             }
-            if (client.validRedirects.indexOf(redirectURI) < 0){
-                log('warn', 'Invalid redirect URI for client ' + client.id + ' (' + client.clientId + ') - ' + redirectURI);
+            if (client.valid_redirects.indexOf(redirectURI) < 0){
+                log('warn', 'Invalid redirect URI for client ' + client.id + ' (' + client.client_id + ') - ' + redirectURI);
                 return done('Invalid redirect URI ' + redirectURI);
             }
             return done(null, client, redirectURI);

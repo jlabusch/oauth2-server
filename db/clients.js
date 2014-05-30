@@ -29,10 +29,10 @@ exports.find = function(id, done){
     return done(null, null);
 };
 
-exports.findByClientId = function(clientId, done){
+exports.findByClientId = function(client_id, done){
     for (var i = 0, len = clients.length; i < len; i++){
         var client = clients[i];
-        if (client.clientId === clientId){
+        if (client.client_id === client_id){
             return done(null, client);
         }
     }

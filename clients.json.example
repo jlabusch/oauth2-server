@@ -2,24 +2,24 @@
   {
     "id": "1",
     "name": "Stuff Nation IdP Demo",
-    "clientId": "sp-demo",
-    "clientSecret": "6415a8749b760c3f01076bd926e09e5481fd5710",
-    "clientSalt": "$4$NVjhep35$GcvkTtwtCwWF/lySYyL7VjhBwqM$",
-    "allowCodeGrant": true,
-    "allowImplicitGrant": true,
-    "validRedirects": [
+    "client_id": "sp-demo",
+    "client_secret": "6415a8749b760c3f01076bd926e09e5481fd5710",
+    "client_salt": "$4$NVjhep35$GcvkTtwtCwWF/lySYyL7VjhBwqM$",
+    "allow_code_grant": true,
+    "allow_implicit_grant": true,
+    "valid_redirects": [
         "http://localhost:8080/"
     ]
   },
   {
     "id": "2",
     "name": "Automated tests",
-    "clientId": "test",
-    "clientSecret": "2aa0c27d4a452d6bbb87e1b175f8e67ce75c000f",
-    "clientSalt": "$4$3SByu9lP$nEyg3Ezxj+5BDsi8uAdwtTeU4Is$",
-    "allowCodeGrant": true,
-    "allowImplicitGrant": true,
-    "validRedirects": [
+    "client_id": "test",
+    "client_secret": "2aa0c27d4a452d6bbb87e1b175f8e67ce75c000f",
+    "client_salt": "$4$3SByu9lP$nEyg3Ezxj+5BDsi8uAdwtTeU4Is$",
+    "allow_code_grant": true,
+    "allow_implicit_grant": true,
+    "valid_redirects": [
         "http://localhost:8080/"
     ]
   }
