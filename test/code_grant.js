@@ -99,7 +99,11 @@ var validate = {
             var j = get_json(res.text);
             j.should.be.ok;
             j.access_token.should.be.ok;
+            j.expires_in.should.be.ok;
+            (j.expires_in > 0).should.be.true;
+            (j.expires_in < 60*60*24*365).should.be.true;
             u.token = j.access_token;
+            u.refresh_token = j.refresh_token;
             j.token_type.should.equal('Bearer');
             done();
         }
@@ -108,6 +112,17 @@ var validate = {
         return function(err, res){
             should.not.exist(err);
             (res.statusCode === 401 || res.statusCode === 403).should.be.ok;
+            done();
+        }
+    },
+    token_err_bad_refresh_token: function(u, done){
+        return function(err, res){
+            should.not.exist(err);
+            res.should.have.status(400);
+            var j = get_json(res.text);
+            should.exist(j.error);
+            j.error.should.equal('invalid_request');
+            (!j.error_description.match(/refresh_token/)).should.be.false;
             done();
         }
     },
@@ -137,8 +152,118 @@ var validate = {
             should.exist(j.id);
             done();
         }
+    },
+    api_err_bad_token: function(u, done){
+        return function(err, res){
+            should.not.exist(err);
+            res.should.have.status(401);
+            done();
+        }
     }
 };
+
+describe('refresh token', function(){
+    var sp_redirect_uri = 'http://localhost:8080/',
+        sp_link_params =     encodeURI('response_type=code&client_id=sp-demo&redirect_uri=' + sp_redirect_uri + '&state=deadbeef');
+
+    var user;
+    describe('basic flow', function(){
+        var u1 = make_user();
+        user = u1;
+
+        it('should redir to /login', function(done){
+            u1.a.get(host + '/authorize?' + sp_link_params)
+                .end(validate.challenge(u1, done));
+        });
+        it('should auth and prompt for consent', function(done){
+            this.timeout(10*1000);
+            u1.a.post(host + '/login')
+                .send({username: 'em_test@tdc-design.com.x', password: good_password})
+                .end(validate.consent(u1, sp_link_params, done));
+        });
+        it('should consent and redir to client with code', function(done){
+            this.timeout(5*1000);
+            u1.a.post(host + '/authorize')
+                .send({transaction_id: u1.txn})
+                .redirects(0)
+                .end(validate.code(u1, sp_redirect_uri, done));
+        });
+        it('should exchange code for token', function(done){
+            make_user().a.post(host + '/token')
+                         .send({
+                            grant_type: 'authorization_code',
+                            code: u1.code,
+                            // side-effect: test ClientPasswordStrategy by putting creds in the body
+                            client_id: 'sp-demo',
+                            client_secret: 'hunter2',
+                            redirect_uri: sp_redirect_uri
+                         })
+                         .end(validate.token(u1, done, true));
+        });
+        it('should allow API access', function(done){
+            u1.a.get(host + '/api/userinfo')
+                .set('Authorization', 'Bearer ' + u1.token)
+                .end(validate.api_access(u1, done));
+        });
+    });
+    describe('exchange', function(){
+        var u1 = user;
+        var origAT = u1.token,
+            origRT = u1.refresh_token;
+
+        it('should return error for bad token', function(done){
+            u1.a.get(host + '/api/userinfo')
+                .set('Authorization', 'Bearer ' + u1.token+'XXX')
+                .end(validate.api_err_bad_token(u1, done));
+        });
+        it('should return a new token', function(done){
+            u1.a.post(host + '/token')
+                .auth('sp-demo', 'hunter2')
+                .send({
+                    grant_type: 'refresh_token',
+                    refresh_token: u1.refresh_token
+                })
+                .end(validate.token(u1, done, true));
+        });
+        it('should have changed both AT and RT', function(){
+            (origAT !== u1.token).should.be.true;
+            (origRT !== u1.refresh_token).should.be.true;
+        });
+        it('should not allow old refresh token to be used again', function(done){
+            u1.a.post(host + '/token')
+                .auth('sp-demo', 'hunter2')
+                .send({
+                    grant_type: 'refresh_token',
+                    refresh_token: origRT
+                })
+                .end(validate.token_err_bad_refresh_token(u1, done, true));
+        });
+        it('should not allow API access for old token', function(done){
+            u1.a.get(host + '/api/userinfo')
+                .set('Authorization', 'Bearer ' + origAT)
+                .end(validate.api_err_bad_token(u1, done));
+        });
+        it('should allow API access for new token', function(done){
+            u1.a.get(host + '/api/userinfo')
+                .set('Authorization', 'Bearer ' + u1.token)
+                .end(validate.api_access(u1, done));
+        });
+        it('should return another new token', function(done){
+            u1.a.post(host + '/token')
+                .auth('sp-demo', 'hunter2')
+                .send({
+                    grant_type: 'refresh_token',
+                    refresh_token: u1.refresh_token
+                })
+                .end(validate.token(u1, done, true));
+        });
+        it('should allow API access', function(done){
+            u1.a.get(host + '/api/userinfo')
+                .set('Authorization', 'Bearer ' + u1.token)
+                .end(validate.api_access(u1, done));
+        });
+    });
+});
 
 describe('auth code grant', function(){
     var sp_redirect_uri = 'http://localhost:8080/',

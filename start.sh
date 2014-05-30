@@ -14,7 +14,7 @@ function startf(){
         if [ -z "$PID" ]; then
             echo "Cleaning up empty PID file $PIDFILE" >&2
             rm -f $PIDFILE
-        elif pidof nodejs | grep -q "$PID"; then
+        elif pmap "$PID" | grep -q nodejs; then
             echo "Not starting $APP, running PID $PID" >&2
             return 1
         else

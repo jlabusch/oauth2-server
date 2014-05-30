@@ -14,6 +14,6 @@ exports.save = function(code, clientID, redirectURI, userID, done){
     store.put(code, {clientID: clientID, redirectURI: redirectURI, userID: userID}, done);
 };
 
-exports.delete = function(key, done){
+exports.del = function(key, done){
     store.del(key, done);
 }

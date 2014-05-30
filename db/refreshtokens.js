@@ -2,7 +2,7 @@ var storage = require('../lib/store'),
     store = null,
     log = require('../lib/logging').log;
 
-storage.create('tokens', function(err, obj){
+storage.create('refresh_tokens', function(err, obj){
     // TODO: check err
     store = obj;
 });
@@ -10,10 +10,6 @@ storage.create('tokens', function(err, obj){
 function index_key(u, c){
     return 'u:' + u + ':c:' + c;
 }
-
-exports.expires_in = function(){
-    return store.__config.ttl;
-};
 
 exports.find = function(token, done){
     store.get(token, done);
@@ -32,7 +28,7 @@ exports.save = function(token, userID, clientID, done){
     });
 };
 
-exports.revoke = function(userID, clientID, done){
+function revoke(userID, clientID, done){
     var reverse_lookup = index_key(userID, clientID);
     store.get(reverse_lookup, function(err, token){
         if (err){
@@ -47,6 +43,17 @@ exports.revoke = function(userID, clientID, done){
             }
             store.del(token, done);
         });
+    });
+}
+
+exports.revoke = revoke;
+
+exports.del = function(token, done){
+    store.get(token, function(err, details){
+        if (err){
+            return done(err);
+        }
+        revoke(details.userID, details.clientID, done);
     });
 };
 

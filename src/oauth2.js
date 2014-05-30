@@ -69,6 +69,13 @@ server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, do
 // Implicit Token Grant.  The callback takes the `client` requesting
 // authorization, the authenticated `user` granting access, and
 // their response. The application issues an access token.
+//
+// TRY NOT TO USE THIS. (i.e. negotiate hard before setting allow_implicit_grant=true.)
+// Because the access token is returned via the User Agent it's more easily captured.
+// Capturing the token for user Alice allows you to log in to ANY other client site
+// that uses the implicit grant pattern as though you were Alice.
+// With the Auth Code Grant pattern you're still open to this kind of attack from
+// malicious Clients, but not from compromised User Agents.
 
 server.grant(oauth2orize.grant.token(function(client, user, ares, done){
     if (client.allow_implicit_grant !== true){
@@ -97,6 +104,100 @@ server.grant(oauth2orize.grant.token(function(client, user, ares, done){
     });
 }));
 
+// Allocate an access token and refresh token.
+// The existing tokens will always be revoked if they exist.
+function allocate_and_save_token(userID, clientID, done){
+    db.accessTokens.revoke(userID, clientID, function(err){
+        if (err){
+            log('warn', 'Error revoking access token for user ' + userID + ' client ' + clientID + ': ' + err);
+        }
+        db.refreshTokens.revoke(userID, clientID, function(err){
+            if (err){
+                log('warn', 'Error revoking refresh token for user ' + userID + ' client ' + clientID + ': ' + err);
+            }
+            // Our tokens are opaque handle-type tokens, which are easier to revoke
+            // than assertion-type tokens. The down side is that they don't scale as well
+            // because they require communication between the auth server and resource
+            // server.
+            // That fits with the current architecture, but YMMV.
+            var token = utils.uid(256);
+            db.accessTokens.save(token, userID, clientID, function(err){
+                if (err){
+                    log('error', 'Failed to allocate access token ' + shorten(token) + ' for user ' + userID + ' client ' + clientID + ': ' + err);
+                    return done(err);
+                }
+                log('info', 'Allocated token ' + shorten(token) + ' for user ' + userID + ' client ' + clientID);
+                var refreshToken = utils.uid(256);
+                db.refreshTokens.save(refreshToken, userID, clientID, function(err){
+                    if (err){
+                        log('error', 'Failed to allocate refresh token ' + shorten(refreshToken) + ' for user ' + userID + ' client ' + clientID + ': ' + err);
+                        // Continue down the success path, just minus a refresh token.
+                        refreshToken = null;
+                    }else{
+                        log('info', 'Allocated refresh token ' + shorten(refreshToken) + ' for user ' + userID + ' client ' + clientID);
+                    }
+                    return done(null, token, refreshToken, {expires_in: db.accessTokens.expires_in() || 0});
+                });
+            });
+        });
+    });
+}
+
+
+// Exchange a refresh token for a new access token and refresh token.
+// Refresh tokens (like authentication codes) are always one-time use items.
+// The point of a refresh token is that you can force access tokens to expire
+// regularly, but also give the client a way of getting a new token without
+// user intervention.
+// Expiring tokens regularly is good because if a token is compromised then
+// the window in which bad stuff can happen is shorter.
+// If the entire Client DB is compromised, i.e. access tokens AND refresh
+// tokens, then the one-time-use nature of refresh tokens gives you a hint
+// that something bad is going on.
+
+server.exchange(oauth2orize.exchange.refreshToken(function(client, refreshToken, scope, done){
+    db.refreshTokens.find(refreshToken, function(err, rv){
+        if (err){
+            log('error', "Couldn't use refresh token " + shorten(refreshToken) + ": " + err);
+            return done(err);
+        }
+        var ok = true;
+        if (!rv){
+            log('warn', "Couldn't use refresh token " + shorten(refreshToken) + ' for client ' + client.id + ", invalid token");
+            ok = false;
+        }else if (client.id !== rv.clientID){
+            log('warn', "Couldn't use refresh token " + shorten(refreshToken) + ' for client ' + client.id + " (actually allocated to " + rv.clientID + ')');
+            ok = false;
+        }else if (client.allow_code_grant !== true){
+            log('warn', "Couldn't use refresh token " + shorten(refreshToken) + ' for client ' + client.id + ", config disabled");
+            ok = false;
+        }
+        if (!ok){
+            if (rv){
+                db.refreshTokens.del(refreshToken, function(err){
+                    if (err){
+                        log('error', 'Failed to delete tainted refresh token ' + shorten(refreshToken));
+                        return done(err);
+                    }
+                    log('notice', 'Deleted refresh token ' + shorten(refreshToken) + ', no token issued.');
+                    done(null, false);
+                });
+            }else{
+                log('debug', 'No refresh token to revoke.');
+                done(null, false);
+            }
+            return;
+        }
+        allocate_and_save_token(rv.userID, rv.clientID, function(err, token, newRefreshToken, params){
+            if (err){
+                log('error', "Couldn't use refresh token " + shorten(refreshToken) + ': ' + err);
+                return done(err);
+            }
+            log('notice', 'Exchanged refresh token ' + shorten(refreshToken) + ' for AT ' + shorten(token) + '/RT ' + shorten(newRefreshToken));
+            done(null, token, newRefreshToken, params);
+        });
+    });
+}));
 
 // Exchange authorization codes for access tokens.  The callback accepts the
 // `client`, which is exchanging `code` and any `redirectURI` from the
@@ -107,7 +208,7 @@ server.grant(oauth2orize.grant.token(function(client, user, ares, done){
 server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, done){
     db.authorizationCodes.find(code, function(err, authCode){
         if (err){
-            log('warn', "couldn't exchange code " + shorten(code) + ": " + err);
+            log('error', "couldn't exchange code " + shorten(code) + ": " + err);
             return done(err);
         }
         var ok = true;
@@ -115,7 +216,7 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
             log('warn', "couldn't exchange code " + shorten(code) + ' for client ' + client.id + ", invalid code");
             ok = false;
         }else if (client.id !== authCode.clientID){
-            log('warn', "couldn't exchange code " + shorten(code) + ' for client ' + client.id + ", that code is allocated to client " + authCode.clientID);
+            log('warn', "couldn't exchange code " + shorten(code) + ' for client ' + client.id + " (actually allocated to " + authCode.clientID + ')');
             ok = false;
         }else if (client.allow_code_grant !== true){
             log('warn', "couldn't exchange code " + shorten(code) + ' for client ' + client.id + ": config disabled");
@@ -127,7 +228,7 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
         if (!ok){
             if (authCode){
                 // revoke code for bad behaviour
-                db.authorizationCodes.delete(code, function(err){
+                db.authorizationCodes.del(code, function(err){
                     if (err){
                         log('error', 'Failed to delete tainted code ' + shorten(code));
                         return done(err);
@@ -142,18 +243,17 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
             return;
         }
 
-        db.authorizationCodes.delete(code, function(err){
+        db.authorizationCodes.del(code, function(err){
             if(err){
                 return done(err);
             }
-            var token = utils.uid(256);
-            db.accessTokens.save(token, authCode.userID, authCode.clientID, function(err){
+            allocate_and_save_token(authCode.userID, authCode.clientID, function(err, token, refresh, params){
                 if (err){
-                    log('error', 'Failed to save new token ' + shorten(token) + ' for code ' + shorten(code));
+                    log('error', 'Failed to exchange code ' + shorten(code) + ' for a token: ' + err);
                     return done(err);
                 }
-                log('notice', 'exchanged code ' + shorten(code) + ' for token ' + shorten(token));
-                done(null, token);
+                log('notice', 'Exchanged code ' + shorten(code) + ' for AT ' + shorten(token) + '/RT ' + shorten(refresh));
+                done(null, token, refresh, params);
             });
         });
     });

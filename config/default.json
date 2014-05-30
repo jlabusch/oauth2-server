@@ -18,7 +18,7 @@
     "storage": {
         "default": {
             "type": "Redis",
-            "db": 1,
+            "db": 2,
             "host": "127.0.0.1",
             "port": 6379,
             "ttl": 0,
@@ -26,10 +26,18 @@
         },
         "tokens": {
             "type": "Redis",
-            "db": 0,
+            "db": 1,
             "host": "127.0.0.1",
             "port": 6379,
-            "ttl": 604800,
+            "ttl": 7200,
+            "options": {}
+        },
+        "refresh_tokens": {
+            "type": "Redis",
+            "db": 1,
+            "host": "127.0.0.1",
+            "port": 6379,
+            "ttl": 7776000,
             "options": {}
         },
         "session": {
