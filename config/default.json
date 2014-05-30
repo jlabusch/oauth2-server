@@ -24,6 +24,14 @@
             "ttl": 0,
             "options": {}
         },
+        "codes": {
+            "type": "Redis",
+            "db": 1,
+            "host": "127.0.0.1",
+            "port": 6379,
+            "ttl": 30,
+            "options": {}
+        },
         "tokens": {
             "type": "Redis",
             "db": 1,
