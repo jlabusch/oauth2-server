@@ -56,7 +56,22 @@ var validate = {
             done();
         }
     },
-    consent: function(u, sp_link_params, done){
+    requesting_consent_no_redirect: function(u, sp_link_params, done){
+        return function(err, res){
+            should.not.exist(err);
+            res.should.have.status(200);
+            (!res.redirects).should.be.false;
+            res.redirects.length.should.equal(0);
+            var sid_match = res.headers['set-cookie'].toString().match(/sid=([^;]+)/);
+            (null !== sid_match).should.be.true;
+            u.sid.should.equal(sid_match[1]);
+            var txn = res.text.match(/transaction_id.*?value="([^"]+)/);
+            (!txn).should.be.false;
+            u.txn = txn[1];
+            done();
+        }
+    },
+    requesting_consent_after_redirect: function(u, sp_link_params, done){
         return function(err, res){
             should.not.exist(err);
             res.should.have.status(200);
@@ -71,16 +86,38 @@ var validate = {
             done();
         }
     },
-    code: function(u, sp_redirect_uri, done){
+    consent_denied: function(u, sp_redirect_uri, done){
         return function(err, res){
             delete u.txn;
             should.not.exist(err);
             res.should.have.status(302);
             (!res.redirects).should.be.false;
-            var redir = res.headers['location'].match(/(.*)?\?code=([^&]+)&state=deadbeef/);
+            var redir = res.headers['location'];
             (!redir).should.be.false;
-            redir[1].should.equal(sp_redirect_uri);
+            redir.should.equal(sp_redirect_uri);
+            var sid_match = res.headers['set-cookie'].toString().match(/sid=([^;]+)/);
+            (null !== sid_match).should.be.true;
+            u.sid.should.equal(sid_match[1]);
+            done();
+        }
+    },
+    consent_denied_no_tid: function(u, sp_redirect_uri, done){
+        return function(err, res){
+            should.not.exist(err);
+            res.should.have.status(500); // Hrm. Questionable status.
+            done();
+        }
+    },
+    code_granted: function(u, sp_redirect_uri, done){
+        return function(err, res){
+            delete u.txn;
+            should.not.exist(err);
+            res.should.have.status(302);
+            (!res.redirects).should.be.false;
+            var redir = res.headers['location'].match(/(.*)?\?code=([^&]+)(&state=.*)?/);
+            (!redir).should.be.false;
             u.code = redir[2];
+            (sp_redirect_uri.match(new RegExp(redir[3])) !== null).should.be.true;
             var sid_match = res.headers['set-cookie'].toString().match(/sid=([^;]+)/);
             (null !== sid_match).should.be.true;
             u.sid.should.equal(sid_match[1]);
@@ -118,11 +155,11 @@ var validate = {
     token_err_bad_refresh_token: function(u, done){
         return function(err, res){
             should.not.exist(err);
-            res.should.have.status(400);
+            res.should.have.status(403);
             var j = get_json(res.text);
             should.exist(j.error);
-            j.error.should.equal('invalid_request');
-            (!j.error_description.match(/refresh_token/)).should.be.false;
+            j.error.should.equal('invalid_grant');
+            j.error_description.should.equal('Invalid refresh token');
             done();
         }
     },
@@ -162,41 +199,168 @@ var validate = {
     }
 };
 
-describe('refresh token', function(){
-    var sp_redirect_uri = 'http://localhost:8080/',
-        sp_link_params =     encodeURI('response_type=code&client_id=sp-demo&redirect_uri=' + sp_redirect_uri + '&state=deadbeef');
+function client_details(name, uri, state){
+    uri = uri || 'http://localhost:8080/';
+    name = name || 'test';
+    return {
+        uri: uri,
+        params: encodeURI('response_type=code&client_id=' + name + '&redirect_uri=' + uri + (state ? '&state=' + state : ''))
+    };
+}
 
-    var user;
-    describe('basic flow', function(){
-        var u1 = make_user();
-        user = u1;
+describe('code grant front channel', function(){
+    var c = client_details('test'),
+        u1 = null;
 
-        it('should redir to /login', function(done){
-            u1.a.get(host + '/authorize?' + sp_link_params)
+    describe('/login', function(){
+        u1 = make_user();
+
+        it('should be triggered when no session exists', function(done){
+            u1.a.get(host + '/authorize?' + c.params)
                 .end(validate.challenge(u1, done));
         });
-        it('should auth and prompt for consent', function(done){
-            this.timeout(10*1000);
+        it('should fail on bad password', function(done){
             u1.a.post(host + '/login')
-                .send({username: 'em_test@tdc-design.com.x', password: good_password})
-                .end(validate.consent(u1, sp_link_params, done));
+                .send({username: 'catalyst.tester@gmail.com.x', password: bad_password})
+                .end(validate.login_failed_bad_password(u1, c.params, done));
         });
-        it('should consent and redir to client with code', function(done){
-            this.timeout(5*1000);
+        it('should fail on bad client ID', function(done){
+            var bad_c = client_details('XXX');
+            var u2 = make_user();
+            u2.a.get(host + '/authorize?' + bad_c.params)
+                .end(validate.challenge(u2, function(){
+                    u2.a.post(host + '/login')
+                        .send({username: 'ittesters@hotmail.co.nz.x', password: good_password})
+                        .end(validate.login_failed_bad_client(u2, bad_c.params, done));
+                }));
+        });
+        it('should succeed on good password', function(done){
+            u1.a.post(host + '/login')
+                .send({username: 'catalyst.tester@gmail.com.x', password: good_password})
+                .end(validate.requesting_consent_after_redirect(u1, c.params, done));
+        });
+        var otxn = null;
+        it('should remember auth state', function(done){
+            should.exist(u1.txn);
+            otxn = u1.txn;
+            u1.a.get(host + '/authorize?' + c.params)
+                .end(validate.requesting_consent_no_redirect(u1, c.params, done));
+        });
+        it('should have generated a new transaction ID', function(){
+            should.exist(u1.txn);
+            otxn.should.not.equal(u1.txn);
+        });
+    });
+    describe('/authorize', function(){
+        it('denying consent should redirect back to client', function(done){
+            u1.a.post(host + '/authorize')
+                .send({transaction_id: u1.txn, cancel: 'Deny'})
+                .redirects(0) // don't follow any redirects
+                .end(validate.consent_denied(u1, c.uri + '?error=access_denied', done));
+        });
+        it('should still be authenticated', function(done){
+            u1.a.get(host + '/authorize?' + c.params + '&state=foo')
+                .end(validate.requesting_consent_no_redirect(u1, c.params, done));
+        });
+        it('should preserve state param on failure redirect', function(done){
+            u1.a.post(host + '/authorize')
+                .send({transaction_id: u1.txn, cancel: 'Deny'})
+                .redirects(0)
+                .end(validate.consent_denied(u1, c.uri + '?error=access_denied' + '&state=foo', done));
+        });
+        it('should not allow transaction IDs to be reused after failure', function(done){
             u1.a.post(host + '/authorize')
                 .send({transaction_id: u1.txn})
                 .redirects(0)
-                .end(validate.code(u1, sp_redirect_uri, done));
+                .end(validate.consent_denied_no_tid(u1, c.params + '&state=foo', done));
         });
-        it('should exchange code for token', function(done){
+        it('should still be authenticated', function(done){
+            u1.a.get(host + '/authorize?' + c.params + '&state=foo')
+                .end(validate.requesting_consent_no_redirect(u1, c.params, done));
+        });
+        it('should grant code on user consent', function(done){
+            u1.a.post(host + '/authorize')
+                .send({transaction_id: u1.txn})
+                .redirects(0)
+                .end(validate.code_granted(u1, c.params + '&state=foo', done));
+        });
+        it('should still be authenticated', function(done){
+            u1.a.get(host + '/authorize?' + c.params)
+                .end(validate.requesting_consent_no_redirect(u1, c.params, done));
+        });
+        it('should allow another code to be granted', function(done){
+            u1.a.post(host + '/authorize')
+                .send({transaction_id: u1.txn})
+                .redirects(0)
+                .end(validate.code_granted(u1, c.params, done));
+        });
+    });
+});
+
+describe('code grant back channel', function(){
+    var c = client_details('test'),
+        u1 = null;
+
+    function grant_initial_code(uN, username){
+        return function(done){
+            uN.a.get(host + '/authorize?' + c.params)
+                .end(validate.challenge(uN, function(){
+                    uN.a.post(host + '/login')
+                        .send({username: username, password: good_password})
+                        .end(validate.requesting_consent_after_redirect(uN, c.params, function(){
+                            uN.a.post(host + '/authorize')
+                                .send({transaction_id: uN.txn})
+                                .redirects(0)
+                                .end(validate.code_granted(uN, c.params, done));
+                        }))
+                }))
+        }
+    }
+    function grant_subsequent_code(uN){
+        return function(done){
+            uN.a.get(host + '/authorize?' + c.params)
+                .end(validate.requesting_consent_no_redirect(uN, c.params, function(){
+                    uN.a.post(host + '/authorize')
+                        .send({transaction_id: uN.txn})
+                        .redirects(0)
+                        .end(validate.code_granted(uN, c.params, done));
+                }))
+        }
+    }
+
+    describe('/token', function(){
+        u1 = make_user();
+
+        it('should grant initial code', grant_initial_code(u1, 'catalyst.tester@gmail.com.x'));
+        it('should fail to exchange code for token with valid-but-mismatched client ID', function(done){
             make_user().a.post(host + '/token')
+                         .auth('sp-demo', 'hunter2')
                          .send({
                             grant_type: 'authorization_code',
                             code: u1.code,
-                            // side-effect: test ClientPasswordStrategy by putting creds in the body
-                            client_id: 'sp-demo',
-                            client_secret: 'hunter2',
-                            redirect_uri: sp_redirect_uri
+                            redirect_uri: c.uri
+                         })
+                         .end(validate.token_err_bad_client(null, done));
+        });
+        it('should fail to exchange code for token (one use only)', function(done){
+            make_user().a.post(host + '/token')
+                         .auth('test', 'hunter2')
+                         .send({
+                            grant_type: 'authorization_code',
+                            code: u1.code,
+                            redirect_uri: c.uri
+                         })
+                         .end(validate.token_err_bad_code(null, done));
+        });
+        it('should get a new code', grant_subsequent_code(u1));
+        it('should exchange code for token', function(done){
+            make_user().a.post(host + '/token')
+                         // side-effect: test BasicStrategy by putting creds in the header
+                         .auth('test', 'hunter2')
+                         .send({
+                            grant_type: 'authorization_code',
+                            code: u1.code,
+                            redirect_uri: c.uri
                          })
                          .end(validate.token(u1, done, true));
         });
@@ -205,42 +369,100 @@ describe('refresh token', function(){
                 .set('Authorization', 'Bearer ' + u1.token)
                 .end(validate.api_access(u1, done));
         });
-    });
-    describe('exchange', function(){
-        var u1 = user;
-        var origAT = u1.token,
-            origRT = u1.refresh_token;
-
-        it('should return error for bad token', function(done){
+        it('should fail to exchange code for token (one use only)', function(done){
+            make_user().a.post(host + '/token')
+                         .auth('test', 'hunter2')
+                         .send({
+                            grant_type: 'authorization_code',
+                            code: u1.code,
+                            redirect_uri: c.uri
+                         })
+                         .end(validate.token_err_bad_code(null, done));
+        });
+        it('should get a new code', grant_subsequent_code(u1));
+        var old_token;
+        it('should exchange code for token', function(done){
+            old_token = u1.token;
+            make_user().a.post(host + '/token')
+                         .send({
+                            grant_type: 'authorization_code',
+                            code: u1.code,
+                            redirect_uri: c.uri,
+                            // side-effect: test ClientPasswordStrategy by putting creds in the body
+                            client_id: 'test',
+                            client_secret: 'hunter2'
+                         })
+                         .end(validate.token(u1, done, true));
+        });
+        it('should have issued a different token', function(){
+            should.exist(u1.token);
+            old_token.should.not.equal(u1.token);
+        });
+        it('should NOT allow API access (old token)', function(done){
             u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + u1.token+'XXX')
+                .set('Authorization', 'Bearer ' + old_token)
                 .end(validate.api_err_bad_token(u1, done));
         });
-        it('should return a new token', function(done){
+        it('should allow API access (new token)', function(done){
+            u1.a.get(host + '/api/userinfo')
+                .set('Authorization', 'Bearer ' + u1.token)
+                .end(validate.api_access(u1, done));
+        });
+    });
+
+    // These tests are separate from plain old access tokens because it's conceivable that you
+    // might want to cut out this functionality without breaking all of the other tests.
+    describe('/token (refresh)', function(){
+        var old_tok,
+            old_reftok;
+        it('should grant new code', grant_subsequent_code(u1));
+        it('should exchange code for token', function(done){
+            old_tok = u1.token;
+            old_reftok = u1.refresh_token;
+            make_user().a.post(host + '/token')
+                         .send({
+                            grant_type: 'authorization_code',
+                            code: u1.code,
+                            redirect_uri: c.uri,
+                            // side-effect: test ClientPasswordStrategy by putting creds in the body
+                            client_id: 'test',
+                            client_secret: 'hunter2'
+                         })
+                         .end(validate.token(u1, done, true));
+        });
+        it('should have issued a different refresh token', function(){
+            should.exist(u1.refresh_token);
+            old_reftok.should.not.equal(u1.refresh_token);
+        });
+        it('should allow refresh token to be redeemed', function(done){
+            old_tok = u1.token;
+            old_reftok = u1.refresh_token;
             u1.a.post(host + '/token')
-                .auth('sp-demo', 'hunter2')
+                .auth('test', 'hunter2')
                 .send({
                     grant_type: 'refresh_token',
                     refresh_token: u1.refresh_token
                 })
                 .end(validate.token(u1, done, true));
         });
-        it('should have changed both AT and RT', function(){
-            (origAT !== u1.token).should.be.true;
-            (origRT !== u1.refresh_token).should.be.true;
+        it('should have changed both tokens again', function(){
+            should.exist(u1.token);
+            old_tok.should.not.equal(u1.token);
+            should.exist(u1.refresh_token);
+            old_reftok.should.not.equal(u1.refresh_token);
         });
         it('should not allow old refresh token to be used again', function(done){
             u1.a.post(host + '/token')
-                .auth('sp-demo', 'hunter2')
+                .auth('test', 'hunter2')
                 .send({
                     grant_type: 'refresh_token',
-                    refresh_token: origRT
+                    refresh_token: old_reftok
                 })
                 .end(validate.token_err_bad_refresh_token(u1, done, true));
         });
         it('should not allow API access for old token', function(done){
             u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + origAT)
+                .set('Authorization', 'Bearer ' + old_tok)
                 .end(validate.api_err_bad_token(u1, done));
         });
         it('should allow API access for new token', function(done){
@@ -248,204 +470,14 @@ describe('refresh token', function(){
                 .set('Authorization', 'Bearer ' + u1.token)
                 .end(validate.api_access(u1, done));
         });
-        it('should return another new token', function(done){
+        it('should allow refresh token to be redeemed', function(done){
             u1.a.post(host + '/token')
-                .auth('sp-demo', 'hunter2')
+                .auth('test', 'hunter2')
                 .send({
                     grant_type: 'refresh_token',
                     refresh_token: u1.refresh_token
                 })
                 .end(validate.token(u1, done, true));
-        });
-        it('should allow API access', function(done){
-            u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + u1.token)
-                .end(validate.api_access(u1, done));
-        });
-    });
-});
-
-describe('auth code grant', function(){
-    var sp_redirect_uri = 'http://localhost:8080/',
-        sp_link_params =     encodeURI('response_type=code&client_id=sp-demo&redirect_uri=' + sp_redirect_uri + '&state=deadbeef'),
-        sp_link_params_alt = encodeURI('response_type=code&client_id=test&redirect_uri=' + sp_redirect_uri + '&state=deadbeef');
-
-    var basic_flow_user = null;
-    describe('basic flow', function(){
-        var u1 = make_user();
-        basic_flow_user = u1;
-
-        it('should redir to /login', function(done){
-            u1.a.get(host + '/authorize?' + sp_link_params)
-                .end(validate.challenge(u1, done));
-        });
-        it('should auth and prompt for consent', function(done){
-            this.timeout(10*1000);
-            u1.a.post(host + '/login')
-                .send({username: 'em_test@tdc-design.com.x', password: good_password})
-                .end(validate.consent(u1, sp_link_params, done));
-        });
-        it('should consent and redir to client with code', function(done){
-            this.timeout(5*1000);
-            u1.a.post(host + '/authorize')
-                .send({transaction_id: u1.txn})
-                .redirects(0)
-                .end(validate.code(u1, sp_redirect_uri, done));
-        });
-        it('should exchange code for token', function(done){
-            make_user().a.post(host + '/token')
-                         .send({
-                            grant_type: 'authorization_code',
-                            code: u1.code,
-                            // side-effect: test ClientPasswordStrategy by putting creds in the body
-                            client_id: 'sp-demo',
-                            client_secret: 'hunter2',
-                            redirect_uri: sp_redirect_uri
-                         })
-                         .end(validate.token(u1, done, true));
-        });
-        it('should allow API access', function(done){
-            u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + u1.token)
-                .end(validate.api_access(u1, done));
-        });
-    });
-    var basic_flow_user_alt = null;
-    describe('basic flow', function(){
-        var u1 = make_user();
-        basic_flow_user_alt = u1;
-
-        it('should redir to /login', function(done){
-            u1.a.get(host + '/authorize?' + sp_link_params_alt)
-                .end(validate.challenge(u1, done));
-        });
-        it('should auth and prompt for consent', function(done){
-            this.timeout(10*1000);
-            u1.a.post(host + '/login')
-                .send({username: 'em_test@tdc-design.com.x', password: good_password})
-                .end(validate.consent(u1, sp_link_params_alt, done));
-        });
-        it('should consent and redir to client with code', function(done){
-            this.timeout(5*1000);
-            u1.a.post(host + '/authorize')
-                .send({transaction_id: u1.txn})
-                .redirects(0)
-                .end(validate.code(u1, sp_redirect_uri, done));
-        });
-        it('should exchange code for token', function(done){
-            make_user().a.post(host + '/token')
-                         .send({
-                            grant_type: 'authorization_code',
-                            code: u1.code,
-                            client_id: 'test',
-                            client_secret: 'hunter2',
-                            redirect_uri: sp_redirect_uri
-                         })
-                         .end(validate.token(u1, done, true));
-        });
-        it('should allow API access', function(done){
-            u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + u1.token)
-                .end(validate.api_access(u1, done));
-        });
-    });
-    describe('multiple client sanity check', function(){
-        it('should have issued different tokens to different clients', function(){
-            should.exist(basic_flow_user.token);
-            should.exist(basic_flow_user_alt.token);
-            basic_flow_user.token.should.not.equal(basic_flow_user_alt.token);
-        });
-    });
-    describe('code redemption', function(){
-        it('should not allow code to be used twice', function(done){
-            make_user().a.post(host + '/token')
-                         .send({
-                            grant_type: 'authorization_code',
-                            code: basic_flow_user.code,
-                            client_id: 'sp-demo',
-                            client_secret: 'hunter2',
-                            redirect_uri: sp_redirect_uri
-                         })
-                         .end(validate.token_err_bad_code(null, done));
-        });
-        it('should not invalidate existing tokens', function(done){
-            var u1 = basic_flow_user;
-            u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + u1.token)
-                .end(validate.api_access(u1, done));
-        });
-    });
-
-    var sp_bad_client_link_params = encodeURI('response_type=code&client_id=XXX&redirect_uri=' + sp_redirect_uri + '&state=deadbeef');
-    describe('invalid client ID in URI', function(){
-        var u1 = make_user();
-
-        it('should redir to /login', function(done){
-            u1.a.get(host + '/authorize?' + sp_bad_client_link_params)
-                .end(validate.challenge(u1, done));
-        });
-        it('should fail auth', function(done){
-            this.timeout(10*1000);
-            u1.a.post(host + '/login')
-                .send({username: 'ittesters@hotmail.co.nz.x', password: good_password})
-                .end(validate.login_failed_bad_client(u1, sp_link_params, done));
-        });
-    });
-
-    describe('invalid client ID in token exchange', function(){
-        var u1 = make_user();
-
-        it('should redir to /login', function(done){
-            u1.a.get(host + '/authorize?' + sp_link_params)
-                .end(validate.challenge(u1, done));
-        });
-        it('should auth and prompt for consent', function(done){
-            this.timeout(10*1000);
-            u1.a.post(host + '/login')
-                .send({username: 'testing.stuff123@yahoo.co.nz.x', password: good_password})
-                .end(validate.consent(u1, sp_link_params, done));
-        });
-        it('should consent and redir to client with code', function(done){
-            this.timeout(5*1000);
-            u1.a.post(host + '/authorize')
-                .send({transaction_id: u1.txn})
-                .redirects(0)
-                .end(validate.code(u1, sp_redirect_uri, done));
-        });
-        it('should fail to exchange code for token with valid-but-mismatched client ID', function(done){
-            make_user().a.post(host + '/token')
-                         // side-effect: test BasicStrategy by putting creds in the header
-                         .auth('test', 'hunter2')
-                         .send({
-                            grant_type: 'authorization_code',
-                            code: u1.code,
-                            redirect_uri: sp_redirect_uri
-                         })
-                         .end(validate.token_err_bad_client(null, done));
-        });
-        it('should fail even with good client ID - codes are one-time things', function(done){
-            make_user().a.post(host + '/token')
-                         .auth('sp-demo', 'hunter2')
-                         .send({
-                            grant_type: 'authorization_code',
-                            code: u1.code,
-                            redirect_uri: sp_redirect_uri
-                         })
-                         .end(validate.token_err_bad_client(null, done));
-        });
-    });
-    describe('bad resource owner password', function(){
-        var u1 = make_user();
-
-        it('should redir to /login', function(done){
-            u1.a.get(host + '/authorize?' + sp_link_params)
-                .end(validate.challenge(u1, done));
-        });
-        it('should fail auth', function(done){
-            this.timeout(10*1000);
-            u1.a.post(host + '/login')
-                .send({username: 'test@test.com.x', password: bad_password})
-                .end(validate.login_failed_bad_password(u1, sp_link_params, done));
         });
     });
 });

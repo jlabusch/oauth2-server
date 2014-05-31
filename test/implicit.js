@@ -32,6 +32,51 @@ var validate = {
             done();
         }
     },
+    login_failed_bad_password: function(u, sp_link_params, done){
+        return function(err, res){
+            should.not.exist(err);
+            res.should.have.status(200);
+            // TODO
+            done();
+        }
+    },
+    login_failed_bad_client: function(u, sp_link_params, done){
+        return function(err, res){
+            should.not.exist(err);
+            res.should.have.status(500);
+            done();
+        }
+    },
+    requesting_consent_no_redirect: function(u, sp_link_params, done){
+        return function(err, res){
+            should.not.exist(err);
+            res.should.have.status(200);
+            (!res.redirects).should.be.false;
+            res.redirects.length.should.equal(0);
+            var sid_match = res.headers['set-cookie'].toString().match(/sid=([^;]+)/);
+            (null !== sid_match).should.be.true;
+            u.sid.should.equal(sid_match[1]);
+            var txn = res.text.match(/transaction_id.*?value="([^"]+)/);
+            (!txn).should.be.false;
+            u.txn = txn[1];
+            done();
+        }
+    },
+    requesting_consent_after_redirect: function(u, sp_link_params, done){
+        return function(err, res){
+            should.not.exist(err);
+            res.should.have.status(200);
+            (!res.redirects).should.be.false;
+            decodeURIComponent(res.redirects[0]).should.equal(host + '/authorize?' + sp_link_params);
+            var sid_match = res.headers['set-cookie'].toString().match(/sid=([^;]+)/);
+            (null !== sid_match).should.be.true;
+            u.sid.should.equal(sid_match[1]);
+            var txn = res.text.match(/transaction_id.*?value="([^"]+)/);
+            (!txn).should.be.false;
+            u.txn = txn[1];
+            done();
+        }
+    },
     consent: function(u, sp_link_params, done){
         return function(err, res){
             should.not.exist(err);
@@ -61,6 +106,28 @@ var validate = {
             done();
         }
     },
+    consent_denied: function(u, sp_redirect_uri, done){
+        return function(err, res){
+            delete u.txn;
+            should.not.exist(err);
+            res.should.have.status(302);
+            (!res.redirects).should.be.false;
+            var redir = res.headers['location'];
+            (!redir).should.be.false;
+            redir.should.equal(sp_redirect_uri);
+            var sid_match = res.headers['set-cookie'].toString().match(/sid=([^;]+)/);
+            (null !== sid_match).should.be.true;
+            u.sid.should.equal(sid_match[1]);
+            done();
+        }
+    },
+    consent_denied_no_tid: function(u, sp_redirect_uri, done){
+        return function(err, res){
+            should.not.exist(err);
+            res.should.have.status(500); // Hrm. Questionable status.
+            done();
+        }
+    },
     no_token: function(u, sp_redirect_uri, done){
         return function(err, res){
             delete u.txn;
@@ -76,16 +143,20 @@ var validate = {
             done();
         }
     },
-    token: function(u, sp_redirect_uri, done){
+    token: function(u, sp_redirect_uri, state, done){
         return function(err, res){
             delete u.txn;
             should.not.exist(err);
             res.should.have.status(302);
             (!res.redirects).should.be.false;
-            var redir = res.headers['location'].match(/(.*)#access_token=([^&]+)&token_type=Bearer/);
+            var pattern = sp_redirect_uri + '#access_token=([^&]+)&token_type=Bearer';
+            if (state){
+                pattern += '&state=' + state;
+            }
+            pattern += '$'; // Note: implicit grant may never include a refresh token.
+            var redir = res.headers['location'].match(new RegExp(pattern));
             (!redir).should.be.false;
-            redir[1].should.equal(sp_redirect_uri);
-            u.token = redir[2];
+            u.token = redir[1];
             var sid_match = res.headers['set-cookie'].toString().match(/sid=([^;]+)/);
             (null !== sid_match).should.be.true;
             u.sid.should.equal(sid_match[1]);
@@ -120,156 +191,99 @@ var validate = {
     }
 };
 
+function client_details(name, uri, state){
+    uri = uri || 'http://localhost:8080/';
+    name = name || 'test';
+    return {
+        uri: uri,
+        params: encodeURI('response_type=token&client_id=' + name + '&redirect_uri=' + uri + (state ? '&state=' + state : ''))
+    };
+}
+
 describe('implicit grant', function(){
-    var sp_redirect_uri = 'http://localhost:8080/';
-    var sp_link_params = encodeURI('response_type=token&client_id=sp-demo&redirect_uri=' + sp_redirect_uri);
+    var c = client_details('test');
 
-    var basic_flow_user = null;
-    describe('basic flow', function(){
-        var u1 = make_user();
-        basic_flow_user = u1;
+    describe('/login', function(){
+        u1 = make_user();
 
-        it('should redir to /login', function(done){
-            u1.a.get(host + '/authorize?' + sp_link_params)
+        it('should be triggered when no session exists', function(done){
+            u1.a.get(host + '/authorize?' + c.params)
                 .end(validate.challenge(u1, done));
         });
-        it('should auth and prompt for consent', function(done){
-            this.timeout(10*1000);
+        it('should fail on bad password', function(done){
             u1.a.post(host + '/login')
-                // Don't use this username in any other implicit tests!
-                .send({username: 'stuff3@tdc-design.com.x', password: good_password})
-                .end(validate.consent(u1, sp_link_params, done));
+                .send({username: 'catalyst.tester@gmail.com.x', password: bad_password})
+                .end(validate.login_failed_bad_password(u1, c.params, done));
         });
-        it('should consent and redir to client with token', function(done){
-            this.timeout(5*1000);
-            u1.a.post(host + '/authorize')
-                .send({transaction_id: u1.txn})
-                .redirects(0)
-                .end(validate.token(u1, sp_redirect_uri, done));
+        it('should fail on bad client ID', function(done){
+            var bad_c = client_details('XXX');
+            var u2 = make_user();
+            u2.a.get(host + '/authorize?' + bad_c.params)
+                .end(validate.challenge(u2, function(){
+                    u2.a.post(host + '/login')
+                        .send({username: 'ittesters@hotmail.co.nz.x', password: good_password})
+                        .end(validate.login_failed_bad_client(u2, bad_c.params, done));
+                }));
         });
-        it('should allow API access', function(done){
-            u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + u1.token)
-                .end(validate.api_access(u1, done));
-        });
-    });
-    describe('multi-user flow', function(){
-        var u1 = make_user()
-            u2 = make_user();
-
-        it('u1 /login', function(done){
-            u1.a.get(host + '/authorize?' + sp_link_params)
-                .end(validate.challenge(u1, done));
-        });
-        it('u2 /login', function(done){
-            u2.a.get(host + '/authorize?' + sp_link_params)
-                .end(validate.challenge(u2, done));
-        });
-        it('u1 auth + consent', function(done){
-            this.timeout(10*1000);
+        it('should succeed on good password', function(done){
             u1.a.post(host + '/login')
                 .send({username: 'catalyst.tester@gmail.com.x', password: good_password})
-                .end(validate.consent(u1, sp_link_params, done));
+                .end(validate.requesting_consent_after_redirect(u1, c.params, done));
         });
-        it('u2 auth + consent', function(done){
-            this.timeout(10*1000);
-            u2.a.post(host + '/login')
-                .send({username: 'catalyst.tester@yahoo.com.x', password: good_password})
-                .end(validate.consent(u2, sp_link_params, done));
+        var otxn = null;
+        it('should remember auth state', function(done){
+            should.exist(u1.txn);
+            otxn = u1.txn;
+            u1.a.get(host + '/authorize?' + c.params)
+                .end(validate.requesting_consent_no_redirect(u1, c.params, done));
         });
-        it('u2 gets token', function(done){
-            this.timeout(5*1000);
-            u2.a.post(host + '/authorize')
-                .send({transaction_id: u2.txn})
-                .redirects(0)
-                .end(validate.token(u2, sp_redirect_uri, done));
-        });
-        it('u1 gets token', function(done){
-            this.timeout(5*1000);
-            u1.a.post(host + '/authorize')
-                .send({transaction_id: u1.txn})
-                .redirects(0)
-                .end(validate.token(u1, sp_redirect_uri, done));
-        });
-        it('u1 API access', function(done){
-            u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + u1.token)
-                .end(validate.api_access(u1, done));
-        });
-        it('u2 API access', function(done){
-            u2.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + u2.token)
-                .end(validate.api_access(u2, done));
+        it('should have generated a new transaction ID', function(){
+            should.exist(u1.txn);
+            otxn.should.not.equal(u1.txn);
         });
     });
-    describe('resource owner denies client access', function(){
-        var u1 = make_user();
-
-        it('should redir to /login', function(done){
-            u1.a.get(host + '/authorize?' + sp_link_params)
-                .end(validate.challenge(u1, done));
+    describe('/authorize', function(){
+        it('denying consent should redirect back to client', function(done){
+            u1.a.post(host + '/authorize')
+                .send({transaction_id: u1.txn, cancel: 'Deny'})
+                .redirects(0) // don't follow any redirects
+                .end(validate.consent_denied(u1, c.uri + '#error=access_denied', done));
         });
-        it('should auth and prompt for consent', function(done){
-            this.timeout(10*1000);
-            u1.a.post(host + '/login')
-                .send({username: 'catalyst.tester@gmail.com.x', password: good_password})
-                .end(validate.consent(u1, sp_link_params, done));
+        it('should still be authenticated', function(done){
+            u1.a.get(host + '/authorize?' + c.params + '&state=foo')
+                .end(validate.requesting_consent_no_redirect(u1, c.params, done));
         });
-        it('should redirect with error', function(done){
-            this.timeout(5*1000);
+        it('should preserve state param on failure redirect', function(done){
             u1.a.post(host + '/authorize')
                 .send({transaction_id: u1.txn, cancel: 'Deny'})
                 .redirects(0)
-                .end(validate.no_token(u1, sp_redirect_uri, done));
+                .end(validate.consent_denied(u1, c.uri + '#error=access_denied' + '&state=foo', done));
         });
-    });
-    describe('resource owner already logged in', function(){
-        var u1 = basic_flow_user;
-        var prev_token,
-            new_token;
-
-        it('should redir to /authorize', function(done){
-            this.timeout(5*1000);
-            prev_token = u1.token;
-            u1.a.get(host + '/authorize?' + sp_link_params)
-                .end(validate.consent_already_logged_in(u1, sp_link_params, done));
-        });
-        it('should consent and redir to client with token', function(done){
-            this.timeout(5*1000);
+        it('should not allow transaction IDs to be reused after failure', function(done){
             u1.a.post(host + '/authorize')
                 .send({transaction_id: u1.txn})
                 .redirects(0)
-                .end(validate.token(u1, sp_redirect_uri, done));
+                .end(validate.consent_denied_no_tid(u1, c.params + '&state=foo', done));
         });
-        it('should not allocate a new token', function(){
-            new_token = u1.token;
-            prev_token.should.equal(new_token);
+        it('should still be authenticated', function(done){
+            u1.a.get(host + '/authorize?' + c.params + '&state=foo')
+                .end(validate.requesting_consent_no_redirect(u1, c.params, done));
         });
-        it('should allow API access', function(done){
-            u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + prev_token)
-                .end(validate.api_access(u1, done));
-        });
-    });
-    describe('resource owner revoking consent through front channel', function(){
-        var u1 = basic_flow_user;
-
-        it('should redir to /authorize', function(done){
-            this.timeout(5*1000);
-            u1.a.get(host + '/authorize?' + sp_link_params)
-                .end(validate.consent_already_logged_in(u1, sp_link_params, done));
-        });
-        it('should redir with denial error', function(done){
-            this.timeout(5*1000);
+        it('should grant token on user consent', function(done){
             u1.a.post(host + '/authorize')
-                .send({transaction_id: u1.txn, cancel: 'Deny'})
+                .send({transaction_id: u1.txn})
                 .redirects(0)
-                .end(validate.no_token(u1, sp_redirect_uri, done));
+                .end(validate.token(u1, c.uri, 'foo', done));
         });
-        it('should no longer allow API access', function(done){
-            u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + u1.token)
-                .end(validate.api_access_failed_bad_token(u1, done));
+        it('should still be authenticated', function(done){
+            u1.a.get(host + '/authorize?' + c.params)
+                .end(validate.requesting_consent_no_redirect(u1, c.params, done));
+        });
+        it('should allow another token to be granted', function(done){
+            u1.a.post(host + '/authorize')
+                .send({transaction_id: u1.txn})
+                .redirects(0)
+                .end(validate.token(u1, c.uri, null, done));
         });
     });
 });
