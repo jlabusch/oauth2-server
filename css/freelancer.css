@@ -23,6 +23,10 @@ a.active {
     color: #3b373a;
 }
 
+.t_tertiary a {
+    color: #a2ae85;
+}
+
 h1,
 h2,
 h3 {

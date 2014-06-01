@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="oath2-server documentation">
+    <meta name="author" content="Jacques Labuschagne">
+
+    <title>jlabusch.github.io/oauth2-server/auth-server</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <link href="css/freelancer.css" rel="stylesheet" type="text/css">
+
+    <!-- Fonts -->
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
+
+    <!-- IE8 support for HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body id="page-top" class="index">
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">OAuth 2.0 Server</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="hidden">
+                        <a href="#page-top"></a>
+                    </li>
+                    <li class="page-scroll"><a href="/oauth2-server/index.html">About</a></li>
+                    <li class="page-scroll"><a href="#">Auth Server</a></li>
+                    <li class="page-scroll"><a href="/oauth2-server/res_server.html">Resource Server</a></li>
+                    <li class="page-scroll"><a href="/oauth2-server/clients.html">Client Patterns</a></li>
+                    <li class="page-scroll"><a href="/">Contact</a></li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <section class="t_secondary" id="s-about" style="padding-top:175px">
+        <div class="container">
+            <div class="row text-center">
+                <h2>Getting Started</h2>
+                <hr class="star-secondary">
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <span class="words">Get Node</span>
+                    <pre> > sudo add-apt-repository ppa:chris-lea/node.js
+ > sudo apt-get update
+ > sudo apt-get install nodejs</pre>
+                    <span class="words">Get the source</span>
+                    <pre> > git clone https://github.com/jlabusch/oauth2-server.git
+ > cd oauth2-server</pre>
+                    <span class="words">Make</span>
+                    <pre> > npm install</pre>
+                    <span class="words">Run</span>
+                    <pre> > npm test</pre>
+                    <p>See also <code>npm [stop|start|restart]</code>.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="t_primary" id="s-comp">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2>Components</h2>
+                    <hr class="star-primary">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <p>In its role as Authorization Server, this application acts as
+                    a broker for the interactions between the other participants. It
+                    maintains a registry of accepted Client sites, authenticates users against
+                    the Resource Server and manages the authorization granted by those users for
+                    Client access to their data.</p>
+                    <img class="img-responsive" src="img/diag_components.png" alt="Server components">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="t_tertiary" id="s-auth">
+        <div class="container">
+            <div class="row text-center">
+                <h2>Auth Server</h2>
+                <hr class="star-tertiary">
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <p>The heart of the application is the <a href="http://expressjs.com/">Express</a> /
+                    <a href="http://passportjs.org/">Passport</a> /
+                    <a href="https://github.com/jaredhanson/oauth2orize">Oauth2orize</a> stack that
+                    defines the framework in which the OAuth interactions take place.</p>
+                    <p>The basic interactions are:</p>
+                    <span class="words">
+                        <h4>GET /login</h4>
+                        Prompts the Resource Owner for his credentials using an EJS template configured
+                        in <code>auth_server.views.login</code>
+                        <h4>POST /login</h4>
+                        Authenticates the Resource Owner against the Resource Server using a
+                        custom function that you'll need to define.
+                        <h4>GET /authorize</h4>
+                        Prompts the user for authorization to share their protected resources with
+                        the Client site. Uses the <code>auth_server.views.dialog</code> EJS template
+                        <h4>POST /authorize</h4>
+                        Handles the result of the user's decision. Depending on the OAuth pattern chosen
+                        by the Client, this can result in an access token or an authorization code
+                        (which the Client then redeems for an access token.)
+                        <h4>POST /token</h4>
+                        Exchanges an authorization code (or a refresh token) for an access token.
+                        <h4>GET /api/userinfo</h4>
+                        Example service allowing access to protected resources based on access tokens.
+                        This (and any other <code>/api/</code> services) will be highly specific to the
+                        Resource Server.
+                    </span>
+                    <h3>Config - Authentication Server</h3>
+                    <pre>"auth_server": {
+  "hostname": "127.0.0.1",
+  "port": 8081,
+  "ssl": false,
+  "ssl_cert": null,
+  "ssl_key": null,
+  "session_secret": "REPLACE ME",
+  "views": {
+    "layout": "layout",
+    "login": "login",
+    "dialog": "dialog"
+  }
+}</pre>
+                    <p>The Authentication Server portion controls the operation of the core Express webserver.</p>
+                    <span class="words">
+                        <ul>
+                            <li><code>hostname</code>: Used by automated tests to find the Express webserver</li>
+                            <li><code>port</code>: Express webserver listen port</li>
+                            <li><code>ssl</code>: Flag to toggle between HTTP and HTTPS</li>
+                            <li><code>ssl_cert</code>: SSL certificate to use (implies <code>ssl = true</code>)</li>
+                            <li><code>ssl_key</code>: SSL key file to use (implies <code>ssl = true</code>)</li>
+                            <li><code>session_secret</code>: Value used to sign session cookies</li>
+                        </ul>
+                        <p>For the EJS template files, any name <code>$X</code> is translated to the
+                        file <code>./views/$X.ejs</code>.</p>
+                        <ul>
+                            <li><code>views.layout</code>: Page foundation</li>
+                            <li><code>views.login</code>: Body of authentication page</li>
+                            <li><code>views.dialog</code>: Body of authorization page</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="t_light" id="s-resource">
+        <div class="container">
+            <div class="row text-center">
+                <h2>Resource Server</h2>
+                <hr class="star-light">
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h3>Interface - Resource Server</h3>
+                    <p>In <code>./lib/resource_server.js</code>:</p>
+                    <pre>exports.MyResourceServerInterface = {
+  login: function(username, password, next){
+    // Authenticate the user and call next(...)
+  },
+  query: function(req, res){
+    // Retrieve protected resource
+  }
+}</pre>
+                    <p>The <code>login()</code> function should invoke <code>next</code> in the following ways:</p>
+                    <span class="words">
+                        <ul>
+                            <li>Login success: <code>next(null, {id: <em>UID</em>, site_token: <em>T</em>, ...})</code></li>
+                            <li>Login failure: <code>next(null, false, {message: '...'})</code></li>
+                            <li>Internal error: <code>next(err)</code></li>
+                        </ul>
+                    </span>
+                    <p>The <code>query()</code> function should use the <code>site_token</code> above (now
+                    available as <code>req.authInfo.site_token</code>) to retrieve a protected resource.
+                    <br/>In cases where no Resource Server software changes are being made and the protected
+                    resources are not directly accessible, this could mean re-using an existing "remember me"
+                    cookie mechanism.</p>
+                    <p>The result should be written using the HTTP/S response argument <code>res</code>,
+                    e.g. using <code>res.json(...)</code>.
+                    <h3>Config - Resource Server</h3>
+                    <pre>"resource_server": {
+  "type": "dummy",
+  "host": "127.0.0.1",
+  "port": 8084,
+  "basic_auth": "user:pass",
+  "user_agent": "OAuth-IdP/0.4.0"
+}</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>type</code>: The name of an object exported from
+                            <code>./lib/resource_server.js</code></li>
+                        </ul>
+                    </span>
+                    <p>Any additional options can be defined for your own implementation of the
+                    Resource Server interface.</p>
+                    <p>See also the stub server in
+                    <code>./dummy-servers/resource_server.js</code>, which is started automatically
+                    via <code>npm start</code> when the configured type is <code>dummy</code>.</p>
+                    <p>For a real world interface example, see the <code>stuff_nation</code> type
+                    in <code>./lib/resource_server.js</code>.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="t_tertiary" id="s-db">
+        <div class="container">
+            <div class="row text-center">
+                <h2>DB &amp; Storage</h2>
+                <hr class="star-tertiary">
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <p>The application stores a few different kinds of state:</p>
+                    <span class="words">
+                        <ul>
+                            <li>User sessions</li>
+                            <li>Authorization codes</li>
+                            <li>Access tokens</li>
+                            <li>Refresh tokens</li>
+                            <li>Client site metadata (JSON file; see <code>./clients.json.example</code>)</li>
+                            <li>User metadata (not exposed to Client sites)</li>
+                        </ul>
+                    </span>
+                    <p>This is an area you're very likely to want to customize based on
+                    your existing ecosystem and deployment environment. Two storage examples
+                    are included: MemStore, a simple REST interface that might be a good way
+                    to bridge to slow data stores, and Redis, an interface to <a href="http://redis.io/">redis-server</a>.</p>
+                    <p>Both the Redis and MemStore interfaces support clustering and multiple
+                    application instances.</p>
+                    <h3>Abstraction</h3>
+                    <p>As per the component diagram, it's useful to think about storage on three levels:</p>
+                    <span class="words">
+                        <ul>
+                            <li>DB abstraction: <code>./db/*.js</code> provides functions for accessing specific
+                            kinds of data in an implementation agnostic way</li>
+                            <li>Storage interface: <code>./lib/store.js</code> provides interfaces to "real"
+                            databases, e.g. redis-server. It's relatively easy to add support for additional
+                            storage types, and to switch between them by changing config on a per-table basis
+                            (i.e. <code>users</code> and <code>tokens</code> can have different kinds of storage.)</li>
+                            <li>Actual storage: Likely to vary between projects based on your specific situation
+                            and requirements.</li>
+                        </ul>
+                    </span>
+                    <h3>Config - General Storage</h3>
+                    <p>General storage can be configured independently for the following logical groups:</p>
+                    <span class="words">
+                        <ul>
+                            <li><code>session</code>: User sessions</li>
+                            <li><code>codes</code>: Authorization codes</li>
+                            <li><code>tokens</code>: Access tokens</li>
+                            <li><code>refresh_tokens</code>: Refresh tokens</li>
+                            <li><code>users</code>: User metadata</li>
+                        </ul>
+                    </span>
+                    <p>One final type, <code>default</code>, provides a catchall.</p>
+                    <p>Out of the box, the supported storage interfaces are Redis and MemStore.</p>
+                    <pre>"storage": {
+  "default": {
+    "type": "MemStore",
+    "host": "127.0.0.1",
+    "port": 8083
+  }
+}</pre>
+                    <p><em>TODO: describe MemStore REST API and dummy server</em></p>
+                    <pre>"storage": {
+  "default": {
+    "type": "Redis",
+    "db": 0,
+    "host": "127.0.0.1",
+    "port": 6379,
+    "ttl": 900,
+    "options": {}
+  }
+}</pre>
+                    <p>Redis storage depends on the <code>redis-server</code> package (tested with 2.6.)
+                    and the Node <code>redis</code> and <code>hiredis</code> modules.</p>
+                    <span class="words">
+                        <ul>
+                            <li><code>type</code>: "Redis" corresponds to the name of an object exported from
+                            <code>./lib/store.js</code></li>
+                            <li><code>db</code>: Specific database instance</li>
+                            <li><code>host</code>: Redis server hostname</li>
+                            <li><code>port</code>: Redis server port</li>
+                            <li><code>ttl</code>: Expiry time of records (SETEX), or 0 for no expiry (SET)</li>
+                            <li><code>options</code>: Additional options to be passed to <code>redis.createClient</code></li>
+                        </ul>
+                    </span>
+                    <h3>Config - Clients</h3>
+                    <p>The list of accepted clients is stored in a JSON file on disk.</p>
+                    <pre>"client_credentials": {
+  "file": "./clients.json"
+}</pre>
+                    <p>Entries in the file define client credentials, redirect URIs and allowed
+                    grant types.</p>
+                    <pre>{
+  "id": "2",
+  "name": "Automated tests",
+  "client_id": "test",
+  "client_secret": "2aa0c27d4a452d6bbb87e1b175f8e67ce75c000f",
+  "client_salt": "$4$3SByu9lP$nEyg3Ezxj+5BDsi8uAdwtTeU4Is$",
+  "allow_code_grant": true,
+  "allow_implicit_grant": true,
+  "valid_redirects": [
+    "http://localhost:8080/"
+  ]
+}</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>id</code>: Unique internal client ID, which should never change</li>
+                            <li><code>name</code>: Name suitable for display to user during authorization step</li>
+                            <li><code>client_id</code>: Client ID as shared with the client site</li>
+                            <li><code>client_secret</code>: SHA-1 hash of <code>client_id:&lt;secret&gt;:client_salt</code>.
+                            We never store the clear text client secret</li>
+                            <li><code>client_salt</code>: Any random-ish string</li>
+                            <li><code>allow_code_grant</code>: <code>true</code> if Authorization Code Grants are allowed for this client</li>
+                            <li><code>allow_implicit_grant</code>: <code>true</code> if Implicit Grants are allowed for this client</li>
+                            <li><code>valid_redirects</code>: A list of the valid redirect URIs for a client. Locking
+                            clients down by redirect URI is a vital layer of protection against abuse.</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="t_secondary" id="s-conf">
+        <div class="container">
+            <div class="row text-center">
+                <h2>Configuration</h2>
+                <hr class="star-secondary">
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <p>The application's configuration system was designed with a couple of goals in mind:</p>
+                    <span class="words">
+                        <ul>
+                            <li>It should support runtime reloading for at least some options (e.g. log levels)</li>
+                            <li>It should be easy to override options based on your environment (e.g. dev/test/prod)</li>
+                        </ul>
+                    </span>
+                    <h3>Environment Variables</h3>
+                    <pre>export NODE_CONFIG_DIR=${NODE_CONFIG_DIR:=config}</pre>
+                    <p>Use <code>NODE_CONFIG_DIR</code> to change where the application looks for
+                    its configuration files. For production use this should probably be somewhere in
+                    <code>/etc/</code>.</p>
+                    <pre>export NODE_ENV=${NODE_ENV:=development}</pre>
+                    <p>Use <code>NODE_ENV</code> to load configuration overrides for particular hosts
+                    or platforms.</p>
+                    <h3>Loading</h3>
+                    <p>Configuration is loaded from (in order)</p>
+                    <pre>$NODE_CONFIG_DIR
+  |-- default.json
+  |-- $NODE_ENV.json
+  `-- runtime.json</pre>
+                    <p><code>default.json</code> should contain the bulk of your configuration, with
+                    host/environment specific overrides in <code>$NODE_ENV.json</code>. By convention
+                    <code>runtime.json</code> should only be used for overrides that you've applied
+                    manually, i.e. outside of a proper deployment cycle, but in reality a config reload
+                    will parse all three files, not just the latter.</p>
+                    <p>Configuration can be reloaded at runtime by sending a SIGHUP to the parent process.
+                    After the configuration is reloaded it emits a <code>loaded</code> event.</p>
+                    <p>In general configuration is either used once on startup and never again (e.g.
+                    webserver listen port) or accessed at runtime through <code>config.get()</code>,
+                    which always accesses the most recently loaded value (e.g. log levels).
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="text-center">
+        <div class="footer-above">
+            <div class="container">
+                <div class="row">
+                    <div class="footer-col col-md-4">
+                    </div>
+                    <div class="footer-col col-md-4">
+                        <h3>Contact Me</h3>
+                        <ul class="list-inline">
+                            <li><a href="https://github.com/jlabusch" class="btn-social btn-outline"><i class="fa fa-fw fa-github"></i></a></li>
+                            <li><a href="https://plus.google.com/113154189645874995686" class="btn-social btn-outline"><i class="fa fa-fw fa-google-plus"></i></a></li>
+                            <li><a href="https://twitter.com/jlabusch" class="btn-social btn-outline"><i class="fa fa-fw fa-twitter"></i></a></li>
+                            <li><a href="http://nz.linkedin.com/pub/jacques-labuschagne/0/47a/512/" class="btn-social btn-outline"><i class="fa fa-fw fa-linkedin"></i></a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col col-md-4">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-below">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+                        Copyright &copy; 2014 - Jacques Labuschagne
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="scroll-top page-scroll visible-xs visble-sm">
+        <a class="btn btn-primary" href="#page-top">
+            <i class="fa fa-chevron-up"></i>
+        </a>
+    </div>
+
+    <script src="js/jquery-1.10.2.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js"></script>
+    <script src="js/classie.js"></script>
+    <script src="js/cbpAnimatedHeader.js"></script>
+    <script src="js/freelancer.js"></script>
+
+</body>
+
+</html>

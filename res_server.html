@@ -8,7 +8,7 @@
     <meta name="description" content="oath2-server documentation">
     <meta name="author" content="Jacques Labuschagne">
 
-    <title>jlabusch.github.io/oauth2-server</title>
+    <title>jlabusch.github.io/oauth2-server/resource-server</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
@@ -48,9 +48,9 @@
                     <li class="hidden">
                         <a href="#page-top"></a>
                     </li>
-                    <li class="page-scroll"><a href="#">About</a></li>
+                    <li class="page-scroll"><a href="/oauth2-server/index.html">About</a></li>
                     <li class="page-scroll"><a href="/oauth2-server/auth_server.html">Auth Server</a></li>
-                    <li class="page-scroll"><a href="/oauth2-server/res_server.html">Resource Server</a></li>
+                    <li class="page-scroll"><a href="#">Resource Server</a></li>
                     <li class="page-scroll"><a href="/oauth2-server/clients.html">Client Patterns</a></li>
                     <li class="page-scroll"><a href="/">Contact</a></li>
                 </ul>
@@ -60,83 +60,15 @@
         <!-- /.container-fluid -->
     </nav>
 
-    <header>
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <img class="img-responsive" src="img/profile.png" style="max-width:256px;" alt="">
-                    <div class="intro-text">
-                        <span class="name">OAuth 2.0 Server</span>
-                        <hr class="star-light">
-                        <span class="skills">Free &mdash; Open &mdash; Simple</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <section class="t_secondary" id="s-about">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12 text-center">
-                    <h2>About</h2>
-                    <hr class="star-secondary">
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-lg-8 col-lg-offset-2 text-left">
-                    <p>This OAuth 2.0 server is based on <a href="https://github.com/jaredhanson">Jared Hanson's</a>
-                    <a href="http://passportjs.org/">Passport</a> and <a href="https://github.com/jaredhanson/oauth2orize">Oauth2orize</a>
-                    modules. Its focus is to provide existing websites with a straight forward way to
-                    become OAuth providers, allowing partner sites to consume their resources
-                    easily and with a moderate level of security.</p>
-                    <p>As a provider, the existing website is given control over not only the whitelist
-                    of valid partner sites but also the OAuth patterns each partner is allowed to use (i.e.
-                    <a href="http://tools.ietf.org/html/rfc6749#section-4.1">Authorization Code Grant</a> and/or 
-                    <a href="http://tools.ietf.org/html/rfc6749#section-4.2">Implicit Grant</a>.)</p>
-                    <p>In OAuth terms, the existing website fills the Authorization Server and Resource
-                    Server roles and the partner sites take the Client role. This software provides the
-                    Authorization Server functionality and is generally able to integrate without any
-                    mandatory software changes to the Resource Server.</p>
-                    <p>Reference implementations are provided for the Client integration code.</p>
-                    <p>This project's <a href="https://github.com/jlabusch/oauth2-server">source code</a> is freely available under the GNU General Public License.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="t_primary" id="s-primer">
+    <section class="t_light" id="s-about" style="padding-top:175px">
         <div class="container">
             <div class="row text-center">
-                <h2>OAuth 2.0 Primer</h2>
-                <hr class="star-primary">
+                <h2>Resource Server</h2>
+                <hr class="star-light">
             </div>
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2">
-                <p>RFC 6749 defines the abstract protocol flow as:</p>
-                <img class="img-responsive" src="img/diag_rfc_abstract_flow.png" alt="OAuth2.0 - Abstract Protocol Flow">
-                <p>The participants are:</p>
-                <span class="words">
-                    <ul>
-                        <li>Resource Owner: The end user.
-                        <li>Client: The third party site you're exposing your protected resources to.
-                        <li>Resource Server: The server hosting the protected resources.
-                        <li>Authorization Server: This application.
-                    </ul>
-                </span>
-                <p>
-                    As a concrete example, if you allow people (i.e. Resource Owners) to log in to your site via Twitter, then
-                    you take on the role of Client, Twitter's core is the Resource Server and
-                    Twitter's OAuth provider is the Authorization Server.
-                </p>
-                <p>The point of all of this is:</p>
-                <span class="words">
-                    <ol>
-                        <li>Users get to make explicit decisions about what information they share, and with who
-                        <li>Resource Servers can integrate with third parties <em>without</em> exposing
-                        Resource Owner credentials.
-                    </ol>
-                </span>
+                    <p><pre>Coming soon</pre></p>
                 </div>
             </div>
         </div>
