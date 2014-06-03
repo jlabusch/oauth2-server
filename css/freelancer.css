@@ -85,12 +85,12 @@ hr.star-tertiary:after {
 }
 
 hr.star-secondary {
-    border-color: #fff;
+    border-color: #36474d;
 }
 
 hr.star-secondary:after {
-    color: #fff;
-    background-color: #a2ae85;
+    color: #36474d;
+    background-color: #fff;
 }
 
 hr.star-primary {
@@ -99,7 +99,7 @@ hr.star-primary {
 
 hr.star-primary:after {
     color: #36474d;
-    background-color: #f1ffe0;
+    background-color: #f1fff0;
 }
 
 .img-centered {
@@ -199,7 +199,7 @@ header .intro-text .skills {
 
 section {
     padding: 100px 0;
-    background: #f1ffe0;
+    background: #f1fff0;
 }
 
 section h2 {
@@ -213,7 +213,7 @@ section.t_light {
 }
 
 .t_light a {
-    color: #f1ffe0;
+    color: #f1fff0;
 }
 
 section.t_tertiary {
@@ -222,8 +222,8 @@ section.t_tertiary {
 }
 
 section.t_secondary {
-    color: #fff;
-    background: #a2ae85;
+    color: #36474d;
+    background: #fff;
 }
 
 @media(max-width:767px) {
