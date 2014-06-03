@@ -365,9 +365,9 @@ describe('code grant back channel', function(){
                          .end(validate.token(u1, done, true));
         });
         it('should allow API access', function(done){
-            u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + u1.token)
-                .end(validate.api_access(u1, done));
+            make_user().a.get(host + '/api/userinfo')
+                         .set('Authorization', 'Bearer ' + u1.token)
+                         .end(validate.api_access(u1, done));
         });
         it('should fail to exchange code for token (one use only)', function(done){
             make_user().a.post(host + '/token')
@@ -399,14 +399,14 @@ describe('code grant back channel', function(){
             old_token.should.not.equal(u1.token);
         });
         it('should NOT allow API access (old token)', function(done){
-            u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + old_token)
-                .end(validate.api_err_bad_token(u1, done));
+            make_user().a.get(host + '/api/userinfo')
+                         .set('Authorization', 'Bearer ' + old_token)
+                         .end(validate.api_err_bad_token(u1, done));
         });
         it('should allow API access (new token)', function(done){
-            u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + u1.token)
-                .end(validate.api_access(u1, done));
+            make_user().a.get(host + '/api/userinfo')
+                         .set('Authorization', 'Bearer ' + u1.token)
+                         .end(validate.api_access(u1, done));
         });
     });
 
@@ -437,13 +437,13 @@ describe('code grant back channel', function(){
         it('should allow refresh token to be redeemed', function(done){
             old_tok = u1.token;
             old_reftok = u1.refresh_token;
-            u1.a.post(host + '/token')
-                .auth('test', 'hunter2')
-                .send({
-                    grant_type: 'refresh_token',
-                    refresh_token: u1.refresh_token
-                })
-                .end(validate.token(u1, done, true));
+            make_user().a.post(host + '/token')
+                         .auth('test', 'hunter2')
+                         .send({
+                             grant_type: 'refresh_token',
+                             refresh_token: u1.refresh_token
+                         })
+                         .end(validate.token(u1, done, true));
         });
         it('should have changed both tokens again', function(){
             should.exist(u1.token);
@@ -452,32 +452,32 @@ describe('code grant back channel', function(){
             old_reftok.should.not.equal(u1.refresh_token);
         });
         it('should not allow old refresh token to be used again', function(done){
-            u1.a.post(host + '/token')
-                .auth('test', 'hunter2')
-                .send({
-                    grant_type: 'refresh_token',
-                    refresh_token: old_reftok
-                })
-                .end(validate.token_err_bad_refresh_token(u1, done, true));
+            make_user().a.post(host + '/token')
+                         .auth('test', 'hunter2')
+                         .send({
+                             grant_type: 'refresh_token',
+                             refresh_token: old_reftok
+                         })
+                         .end(validate.token_err_bad_refresh_token(u1, done, true));
         });
         it('should not allow API access for old token', function(done){
-            u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + old_tok)
-                .end(validate.api_err_bad_token(u1, done));
+            make_user().a.get(host + '/api/userinfo')
+                         .set('Authorization', 'Bearer ' + old_tok)
+                         .end(validate.api_err_bad_token(u1, done));
         });
         it('should allow API access for new token', function(done){
-            u1.a.get(host + '/api/userinfo')
-                .set('Authorization', 'Bearer ' + u1.token)
-                .end(validate.api_access(u1, done));
+            make_user().a.get(host + '/api/userinfo')
+                         .set('Authorization', 'Bearer ' + u1.token)
+                         .end(validate.api_access(u1, done));
         });
         it('should allow refresh token to be redeemed', function(done){
-            u1.a.post(host + '/token')
-                .auth('test', 'hunter2')
-                .send({
-                    grant_type: 'refresh_token',
-                    refresh_token: u1.refresh_token
-                })
-                .end(validate.token(u1, done, true));
+            make_user().a.post(host + '/token')
+                         .auth('test', 'hunter2')
+                         .send({
+                             grant_type: 'refresh_token',
+                             refresh_token: u1.refresh_token
+                         })
+                         .end(validate.token(u1, done, true));
         });
     });
 });
