@@ -90,7 +90,7 @@ hr.star-secondary {
 
 hr.star-secondary:after {
     color: #36474d;
-    background-color: #fff;
+    background-color: #dce5bb;
 }
 
 hr.star-primary {
@@ -223,7 +223,7 @@ section.t_tertiary {
 
 section.t_secondary {
     color: #36474d;
-    background: #fff;
+    background: #dce5bb;
 }
 
 @media(max-width:767px) {

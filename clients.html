@@ -59,11 +59,11 @@
         <!-- /.container-fluid -->
     </nav>
 
-    <section class="t_light" style="padding-top:175px">
+    <section class="t_secondary" style="padding-top:175px">
         <div class="container">
             <div class="row text-center">
-                <h2>Authorization Code Grant Pattern</h2>
-                <hr class="star-light">
+                <h2>Auth Code Grant Pattern</h2>
+                <hr class="star-secondary">
             </div>
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2">
@@ -85,6 +85,7 @@
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2">
                     <h3>Obtaining Authorization</h3>
+                    <p>&nbsp;</p>
                     <img class="img-responsive" src="img/diag_code_auth.png" alt="OAuth2.0 - Authorization Code Grant">
                     <p><em>See <a href="http://tools.ietf.org/html/rfc6749#section-4.1">RFC 6749 for more</a></em></p>
                 </div>
@@ -177,6 +178,13 @@ Content-Length: 101
 Connection: close
 
 {"grant_type":"authorization_code","code":"wglXO28xcX91Pthn","redirect_uri":"http://mysite.com/"}</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>grant_type</code>: Must be <code>authorization_code</code>.</li>
+                            <li><code>code</code>: The authorization code returned in (C).</li>
+                            <li><code>redirect_uri</code>: A valid URI as in (A).</li>
+                        </ul>
+                    </span>
                     <p>The preferred means of Client authentication is through the HTTP Basic
                     Authentication header as above (i.e. base64 <code>&lt;client_id&gt;:&lt;client_secret&gt;</code>), but it's also possible to include those credentials in the body of the POST:
 <pre>POST /token HTTP/1.1
@@ -208,6 +216,128 @@ Connection: keep-alive
 Transfer-Encoding: chunked
 
 {"access_token":"emnziC15S33dffGUoJsPqxc0C5GGW4XT2Hd18xINwoZW0og1TtTolpFA09O7YCqWaYC8pKDH38QZlqR0q3MgEsyj8O8A6dYqaMLSHBh2lWTVfghkd5BdaVxqCszwjlJX5Cm5IcXJfIErq75JWmVDgXcWij7NJ1eyRFG4mGmDNHjJ4gdi1jIxbcml8jCNRlAyx9wY81KB6hSsdCoaWpPqyIvXF98AyBEM0cPnhmYotrvCtKF2Zr1ge6CO8IS7Vevg","refresh_token":"cMaXWsvgoNzgqWfchTPyWJq3OvbGKDMJcsIzyg8nxQ5qQfasYvMfahfIGWMnCpt8FMC2xW26ALikq3JOSRB2ZVZ3gTdqkPJ1zramKc9srbkaMPA0yCTy8YASZYYO85wR0tArTYXBXOxJ4iytGCLbee7HIXUr4yvKdmvvhro08lXlOIIHoF3cIywHCHK7URZPCUtqnQZuSAZBXUztdeYM8MwAYXjR2RjShXUADvOlec2hbakYBjO2FOoh4d7KtoTc","expires_in":7200,"token_type":"Bearer"}</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>access_token</code>: A short lived token (e.g. 2 hours)
+                            that can be used to access protected resources.</li>
+                            <li><code>refresh_token</code>: A longer lived token (e.g. 90 days) that can be
+                            exchanged for a new <code>access_token</code>/<code>refresh_token</code> pair.</li>
+                            <li><code>expires_in</code>: The number of seconds until the access token expires.</li>
+                            <li><code>token_type</code>: Always <code>Bearer</code>.</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="t_primary">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h3>Using Refresh Tokens</h3>
+                    <p>&nbsp;</p>
+                    <img class="img-responsive" src="img/diag_refresh_token.png" alt="OAuth2.0 - Authorization Code Grant">
+                    <p><em>See <a href="http://tools.ietf.org/html/rfc6749#section-1.5">RFC 6749 for more</a></em></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="t_secondary">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h3>Example</h3>
+                    <p>&nbsp;</p>
+                    <h4>(C) Client accesses protected resource</h4>
+                    <blockquote>The client makes a protected resource request to the resource
+                    server by presenting the access token.</blockquote>
+                    <p>The access token appears in the HTTP Bearer Auth header.</p>
+<pre>GET /api/userinfo HTTP/1.1
+Host: oauth.example.com
+Accept-Encoding: gzip, deflate
+Cookie: 
+User-Agent: node-superagent/0.18.0
+Authorization: Bearer emnziC15S33dffGUoJsPqxc0C5GGW4XT2Hd18xINwoZW0og1TtTolpFA09O7YCqWaYC8pKDH38QZlqR0q3MgEsyj8O8A6dYqaMLSHBh2lWTVfghkd5BdaVxqCszwjlJX5Cm5IcXJfIErq75JWmVDgXcWij7NJ1eyRFG4mGmDNHjJ4gdi1jIxbcml8jCNRlAyx9wY81KB6hSsdCoaWpPqyIvXF98AyBEM0cPnhmYotrvCtKF2Zr1ge6CO8IS7Vevg
+Connection: close</pre>
+                    <p>&nbsp;</p>
+                    <h4>(D) Protected resource response</h4>
+                    <blockquote>The resource server validates the access token, and if valid,
+                    serves the request.</blockquote>
+                    <p>Note that in order to minimise the changes required to the Resource Server,
+                    the provider has the option of proxying these access requests through
+                    the Authorization Server, isolating the token validation logic from the
+                    Resource Server itself.</p>
+<pre>
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+Content-Type: application/json; charset=utf-8
+Content-Length: 52
+Date: Tue, 03 Jun 2014 09:18:25 GMT
+Connection: close
+
+{"id":"f1d2d2f9", "first_name":"Bob", "last_name":"Smith", "email":"bob@example.com"}</pre>
+                    <p>Contact your specific provider for a specification of the available API endpoints and
+                    their associated response attributes.</p>
+                    <p>&nbsp;</p>
+                    <h4>(E) Subsequent resource request</h4>
+                    <blockquote>Steps (C) and (D) repeat until the access token expires.  If the
+                    client knows the access token expired, it skips to step (G);
+                    otherwise, it makes another protected resource request.</blockquote>
+                    <p>&nbsp;</p>
+                    <h4>(F) Failure response</h4>
+                    <blockquote>Since the access token is invalid, the resource server returns
+                    an invalid token error.</blockquote>
+<pre>HTTP/1.1 401 Unauthorized
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+WWW-Authenticate: Bearer realm="Users", error="invalid_token"
+Date: Tue, 03 Jun 2014 09:18:25 GMT
+Connection: close
+Transfer-Encoding: chunked
+
+Unauthorized</pre>
+                    <p>&nbsp;</p>
+                    <h4>(G) Refresh token request</h4>
+                    <blockquote>The client requests a new access token by authenticating with
+                    the authorization server and presenting the refresh token.  The
+                    client authentication requirements are based on the client type
+                    and on the authorization server policies.</blockquote>
+                    <p>Note the presence of the Client's HTTP Basic Auth header.</p>
+<pre>POST /token HTTP/1.1
+Host: oauth.example.com
+Accept-Encoding: gzip, deflate
+Cookie: 
+User-Agent: node-superagent/0.18.0
+Authorization: Basic dGVzdDpodW50ZXIy
+Content-Type: application/json
+Content-Length: 305
+Connection: close
+
+{"grant_type":"refresh_token","refresh_token":"cMaXWsvgoNzgqWfchTPyWJq3OvbGKDMJcsIzyg8nxQ5qQfasYvMfahfIGWMnCpt8FMC2xW26ALikq3JOSRB2ZVZ3gTdqkPJ1zramKc9srbkaMPA0yCTy8YASZYYO85wR0tArTYXBXOxJ4iytGCLbee7HIXUr4yvKdmvvhro08lXlOIIHoF3cIywHCHK7URZPCUtqnQZuSAZBXUztdeYM8MwAYXjR2RjShXUADvOlec2hbakYBjO2FOoh4d7KtoTc"}</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>grant_type</code>: Must be <code>refresh_token</code>.</li>
+                            <li><code>refresh_token</code>: The token returned on a previous call to <code>/token</code>.</li>
+                        </ul>
+                    </span>
+                    <p>&nbsp;</p>
+                    <h4>(H) New access token response</h4>
+                    <blockquote>The authorization server authenticates the client and validates
+                    the refresh token, and if valid, issues a new access token (and,
+                    optionally, a new refresh token).</blockquote>
+<pre>HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: application/json
+Cache-Control: no-store
+Pragma: no-cache
+Date: Tue, 03 Jun 2014 09:18:25 GMT
+Connection: close
+Transfer-Encoding: chunked
+
+{"access_token":"wPxG4ZEgXZmBG3rMRcb7tSE4Wp32f1hHp0TiVvB9RubhZ0KMLFXpiAMdtdW5mtx58lax29PKoCvwd7KYOf6pmWD70kNVDebCXeon4iW5RsrQkxKCpB5qOdtqoweHysAwettDBlVLWREYYiwYkrPqpd92cvFS9Q8SQwptj3iYeUgkFtT26YtrmivQq7lLkfICJsGApYVzA9PANyXps4Qq9I57HgpnryeS3yGkBIt3HCM6ZF2TcLgNBdMAg1sJMrRI","refresh_token":"cntSZunRNWGvq7R2Xyx8RJE5C9uRhUObCBIcWQxud1xtEWnWrrPSKwp2Xn1TH1HSdIdjXMWjR56S8rP4kh8inpRFGW3bbWNRgloej7uorIpp310KaxcIB8X5lPix8TuAHzwgAZRFpHkezQrKzSwTRLgCLuHszzw6QZIbhEYW6aA5e48BqRJbZ1B2YjRcCw9TykhBBp0eAusR3dbGKFrm8qvF53ZqhmWPjwtWsdNxqJTqyJ3IvfzpMCAUGiEP5p2D","expires_in":7200,"token_type":"Bearer"}</pre>
                 </div>
             </div>
         </div>
