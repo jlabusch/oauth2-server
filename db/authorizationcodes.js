@@ -10,8 +10,8 @@ exports.find = function(key, done){
     store.get(key, done);
 };
 
-exports.save = function(code, clientID, redirectURI, userID, done){
-    store.put(code, {clientID: clientID, redirectURI: redirectURI, userID: userID}, done);
+exports.save = function(code, clientID, redirectURI, userID, scope, done){
+    store.put(code, {clientID: clientID, redirectURI: redirectURI, userID: userID, scope: scope}, done);
 };
 
 exports.del = function(key, done){

@@ -23,8 +23,8 @@ exports.find_by_user = function(userID, clientID, done){
     store.get(index_key(userID, clientID), done);
 };
 
-exports.save = function(token, userID, clientID, done){
-    store.put(token, {userID: userID, clientID: clientID}, function(err){
+exports.save = function(token, userID, clientID, scope, done){
+    store.put(token, {userID: userID, clientID: clientID, scope: scope}, function(err){
         if (err){
             return done(err);
         }

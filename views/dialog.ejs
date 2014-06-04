@@ -6,10 +6,11 @@
           </div>
           <div class="panel-body">
             <p>Hi <%= user.firstName %>,</p>
-            <p>Is it OK if we share your basic Stuff Nation account information with <strong><%= client.name %></strong>?</p>
+            <p><strong><%= client.name %></strong> is requesting access to <%= scope.join(', ') %> scope(s). Allow?</p>
           </div>
         </div>
         <input name="transaction_id" type="hidden" value="<%= transactionID %>">
+        <input name="scope" type="hidden" value="<%= scope.join(' ') %>">
         <button class="btn btn-lg btn-primary btn-block" type="submit" value="Allow" id="allow">Allow</button>
         <button name="cancel" class="btn btn-lg btn-primary btn-block" type="submit" value="Deny" id="deny">Deny</button>
       </form>

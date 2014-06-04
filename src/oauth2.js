@@ -57,8 +57,9 @@ server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, do
     }
 
     var code = utils.uid(16)
-    db.authorizationCodes.save(code, client.id, redirectURI, user.id, function(err){
+    db.authorizationCodes.save(code, client.id, redirectURI, user.id, ares.scope, function(err){
         if (err){
+            log('error', "Couldn't save authorization code " + shorten(code) + ': ' + err);
             return done(err);
         }
         log('notice', 'allocated code ' + shorten(code) + ' to ' + user.id);
@@ -82,31 +83,27 @@ server.grant(oauth2orize.grant.token(function(client, user, ares, done){
         log('warn', 'Implicit grant not allowed for client ' + client.id + ' (' + client.client_id + ')');
         return done('Implicit Grant not allowed for this Client');
     }
-    db.accessTokens.find_by_user(user.id, client.id, function(err, token){
+    db.accessTokens.revoke(user, client, function(err){
         if (err){
-            log('error', 'Error while looking up token for ' + client.id + '.' + user.id + ' - ' + err);
-            // But carry on anyway...
+            log('warn', 'Error revoking access token for user ' + userID + ' client ' + clientID + ': ' + err);
         }
-        if (token){
-            log('notice', 'retrieved token ' + shorten(token) + ' for ' + client.id + '.' + user.id);
-            done(null, token);
-        }else{
-            log('info', 'No existing token for ' + client.id + '.' + user.id);
-            token = utils.uid(256);
-            db.accessTokens.save(token, user.id, client.id, function(put_err){
-                if (put_err){
-                    return done(put_err);
-                }
-                log('notice', 'allocated token ' + shorten(token) + ' to ' + client.id + '.' + user.id);
-                done(null, token);
-            });
-        }
+        token = utils.uid(256);
+        db.accessTokens.save(token, user.id, client.id, ares.scope, function(put_err){
+            if (put_err){
+                return done(put_err);
+            }
+            log('notice', 'allocated token ' + shorten(token) + ' to ' + client.id + '.' + user.id);
+            var params = {expires_in: db.accessTokens.expires_in() || 0};
+            // Scope was validated earlier on.
+            params.scope = ares.scope || ['basic'];
+            done(null, token, params);
+        });
     });
 }));
 
 // Allocate an access token and refresh token.
 // The existing tokens will always be revoked if they exist.
-function allocate_and_save_token(userID, clientID, done){
+function allocate_and_save_token(userID, clientID, scope, done){
     db.accessTokens.revoke(userID, clientID, function(err){
         if (err){
             log('warn', 'Error revoking access token for user ' + userID + ' client ' + clientID + ': ' + err);
@@ -121,14 +118,14 @@ function allocate_and_save_token(userID, clientID, done){
             // server.
             // That fits with the current architecture, but YMMV.
             var token = utils.uid(256);
-            db.accessTokens.save(token, userID, clientID, function(err){
+            db.accessTokens.save(token, userID, clientID, scope, function(err){
                 if (err){
                     log('error', 'Failed to allocate access token ' + shorten(token) + ' for user ' + userID + ' client ' + clientID + ': ' + err);
                     return done(err);
                 }
                 log('info', 'Allocated token ' + shorten(token) + ' for user ' + userID + ' client ' + clientID);
                 var refreshToken = utils.uid(256);
-                db.refreshTokens.save(refreshToken, userID, clientID, function(err){
+                db.refreshTokens.save(refreshToken, userID, clientID, scope, function(err){
                     if (err){
                         log('error', 'Failed to allocate refresh token ' + shorten(refreshToken) + ' for user ' + userID + ' client ' + clientID + ': ' + err);
                         // Continue down the success path, just minus a refresh token.
@@ -136,7 +133,10 @@ function allocate_and_save_token(userID, clientID, done){
                     }else{
                         log('info', 'Allocated refresh token ' + shorten(refreshToken) + ' for user ' + userID + ' client ' + clientID);
                     }
-                    return done(null, token, refreshToken, {expires_in: db.accessTokens.expires_in() || 0});
+                    var params = {expires_in: db.accessTokens.expires_in() || 0};
+                    // Scope was validated earlier on.
+                    params.scope = scope || ['basic'];
+                    return done(null, token, refreshToken, params);
                 });
             });
         });
@@ -155,25 +155,25 @@ function allocate_and_save_token(userID, clientID, done){
 // tokens, then the one-time-use nature of refresh tokens gives you a hint
 // that something bad is going on.
 
-server.exchange(oauth2orize.exchange.refreshToken(function(client, refreshToken, scope, done){
-    db.refreshTokens.find(refreshToken, function(err, rv){
+server.exchange(oauth2orize.exchange.refreshToken(function(client, refreshToken, done){
+    db.refreshTokens.find(refreshToken, function(err, rtok){
         if (err){
             log('error', "Couldn't use refresh token " + shorten(refreshToken) + ": " + err);
             return done(err);
         }
         var ok = true;
-        if (!rv){
+        if (!rtok){
             log('warn', "Couldn't use refresh token " + shorten(refreshToken) + ' for client ' + client.id + ", invalid token");
             ok = false;
-        }else if (client.id !== rv.clientID){
-            log('warn', "Couldn't use refresh token " + shorten(refreshToken) + ' for client ' + client.id + " (actually allocated to " + rv.clientID + ')');
+        }else if (client.id !== rtok.clientID){
+            log('warn', "Couldn't use refresh token " + shorten(refreshToken) + ' for client ' + client.id + " (actually allocated to " + rtok.clientID + ')');
             ok = false;
         }else if (client.allow_code_grant !== true){
             log('warn', "Couldn't use refresh token " + shorten(refreshToken) + ' for client ' + client.id + ", config disabled");
             ok = false;
         }
         if (!ok){
-            if (rv){
+            if (rtok){
                 db.refreshTokens.del(refreshToken, function(err){
                     if (err){
                         log('error', 'Failed to delete tainted refresh token ' + shorten(refreshToken));
@@ -188,7 +188,7 @@ server.exchange(oauth2orize.exchange.refreshToken(function(client, refreshToken,
             }
             return;
         }
-        allocate_and_save_token(rv.userID, rv.clientID, function(err, token, newRefreshToken, params){
+        allocate_and_save_token(rtok.userID, rtok.clientID, rtok.scope, function(err, token, newRefreshToken, params){
             if (err){
                 log('error', "Couldn't use refresh token " + shorten(refreshToken) + ': ' + err);
                 return done(err);
@@ -216,7 +216,7 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
             log('warn', "couldn't exchange code " + shorten(code) + ' for client ' + client.id + ", invalid code");
             ok = false;
         }else if (client.id !== authCode.clientID){
-            log('warn', "couldn't exchange code " + shorten(code) + ' for client ' + client.id + " (actually allocated to " + authCode.clientID + ')');
+            log('warn', "couldn't exchange code " + shorten(code) + ' for client ' + client.id + ", actually allocated to client " + authCode.clientID);
             ok = false;
         }else if (client.allow_code_grant !== true){
             log('warn', "couldn't exchange code " + shorten(code) + ' for client ' + client.id + ": config disabled");
@@ -247,7 +247,7 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
             if(err){
                 return done(err);
             }
-            allocate_and_save_token(authCode.userID, authCode.clientID, function(err, token, refresh, params){
+            allocate_and_save_token(authCode.userID, authCode.clientID, authCode.scope, function(err, token, refresh, params){
                 if (err){
                     log('error', 'Failed to exchange code ' + shorten(code) + ' for a token: ' + err);
                     return done(err);
@@ -301,7 +301,8 @@ exports.authorization = [
             {
                 transactionID: req.oauth2.transactionID,
                 user: req.user,
-                client: req.oauth2.client
+                client: req.oauth2.client,
+                scope: req.oauth2.req.scope || [] // TODO: validate scope
             }
         );
     }
@@ -327,7 +328,9 @@ exports.decision = [
                 log('error', 'Can\'t revoke consent for ' + clientID + '.' + userID);
             }
         }
-        done();
+        // TODO: validate scope
+        var scope = req.body['scope'] || 'basic';
+        done(null, {scope: scope.split(' ')});
     })
 ]
 

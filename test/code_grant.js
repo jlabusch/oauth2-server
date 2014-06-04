@@ -124,7 +124,7 @@ var validate = {
             done();
         }
     },
-    token: function(u, done, keep_code){
+    token: function(u, done, keep_code, scope){
         return function(err, res){
             if (keep_code){
                 // Don't delete code yet; we want to check it can't be used twice.
@@ -139,6 +139,11 @@ var validate = {
             j.expires_in.should.be.ok;
             (j.expires_in > 0).should.be.true;
             (j.expires_in < 60*60*24*365).should.be.true;
+            if (scope){
+                should.exist(j.scope);
+                var ss = j.scope.join(' ');
+                ss.should.equal(scope);
+            }
             u.token = j.access_token;
             u.refresh_token = j.refresh_token;
             j.token_type.should.equal('Bearer');
@@ -199,12 +204,18 @@ var validate = {
     }
 };
 
-function client_details(name, uri, state){
+function client_details(name, uri, state, scope){
     uri = uri || 'http://localhost:8080/';
     name = name || 'test';
     return {
         uri: uri,
-        params: encodeURI('response_type=code&client_id=' + name + '&redirect_uri=' + uri + (state ? '&state=' + state : ''))
+        params: encodeURI('response_type=code' +
+                          '&client_id=' + name +
+                          '&redirect_uri=' + uri +
+                          (state ? '&state=' + state : '') +
+                          (scope ? '&scope=' + scope : '')),
+        state: state,
+        scope: scope
     };
 }
 
@@ -301,29 +312,31 @@ describe('code grant back channel', function(){
     var c = client_details('test'),
         u1 = null;
 
-    function grant_initial_code(uN, username){
+    function grant_initial_code(uN, username, client){
+        client = client || c;
         return function(done){
-            uN.a.get(host + '/authorize?' + c.params)
+            uN.a.get(host + '/authorize?' + client.params)
                 .end(validate.challenge(uN, function(){
                     uN.a.post(host + '/login')
                         .send({username: username, password: good_password})
-                        .end(validate.requesting_consent_after_redirect(uN, c.params, function(){
+                        .end(validate.requesting_consent_after_redirect(uN, client.params, function(){
                             uN.a.post(host + '/authorize')
-                                .send({transaction_id: uN.txn})
+                                .send({transaction_id: uN.txn, scope: client.scope})
                                 .redirects(0)
-                                .end(validate.code_granted(uN, c.params, done));
+                                .end(validate.code_granted(uN, client.params, done));
                         }))
                 }))
         }
     }
-    function grant_subsequent_code(uN){
+    function grant_subsequent_code(uN, client){
+        client = client || c;
         return function(done){
-            uN.a.get(host + '/authorize?' + c.params)
-                .end(validate.requesting_consent_no_redirect(uN, c.params, function(){
+            uN.a.get(host + '/authorize?' + client.params)
+                .end(validate.requesting_consent_no_redirect(uN, client.params, function(){
                     uN.a.post(host + '/authorize')
-                        .send({transaction_id: uN.txn})
+                        .send({transaction_id: uN.txn, scope: client.scope})
                         .redirects(0)
-                        .end(validate.code_granted(uN, c.params, done));
+                        .end(validate.code_granted(uN, client.params, done));
                 }))
         }
     }
@@ -407,6 +420,28 @@ describe('code grant back channel', function(){
             make_user().a.get(host + '/api/userinfo')
                          .set('Authorization', 'Bearer ' + u1.token)
                          .end(validate.api_access(u1, done));
+        });
+    });
+
+    describe('explicit scopes', function(){
+        var u3 = make_user(),
+            c2 = client_details('test', null, null, 'profile');
+
+        it('should grant initial code', grant_initial_code(u3, 'bob@example.com', c2));
+        it('should exchange code for token', function(done){
+            make_user().a.post(host + '/token')
+                         .auth('test', 'hunter2')
+                         .send({
+                            grant_type: 'authorization_code',
+                            code: u3.code,
+                            redirect_uri: c2.uri
+                         })
+                         .end(validate.token(u3, done, true, c2.scope));
+        });
+        it('should allow API access', function(done){
+            make_user().a.get(host + '/api/userinfo')
+                         .set('Authorization', 'Bearer ' + u3.token)
+                         .end(validate.api_access(u3, done));
         });
     });
 

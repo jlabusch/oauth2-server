@@ -143,17 +143,18 @@ var validate = {
             done();
         }
     },
-    token: function(u, sp_redirect_uri, state, done){
+    token: function(u, sp_redirect_uri, scope, state, done){
         return function(err, res){
             delete u.txn;
             should.not.exist(err);
             res.should.have.status(302);
             (!res.redirects).should.be.false;
-            var pattern = sp_redirect_uri + '#access_token=([^&]+)&token_type=Bearer';
-            if (state){
-                pattern += '&state=' + state;
-            }
-            pattern += '$'; // Note: implicit grant may never include a refresh token.
+            var pattern = sp_redirect_uri + '#access_token=([^&]+)' +
+                                            '&expires_in=\\d+' +
+                                            (scope ? '&scope=' + scope : '') +
+                                            '&token_type=Bearer' +
+                                            (state ? '&state=' + state : '') +
+                                            '$'; // Note: implicit grant may never include a refresh token.
             var redir = res.headers['location'].match(new RegExp(pattern));
             (!redir).should.be.false;
             u.token = redir[1];
@@ -269,13 +270,15 @@ describe('implicit grant', function(){
             u1.a.get(host + '/authorize?' + c.params + '&state=foo')
                 .end(validate.requesting_consent_no_redirect(u1, c.params, done));
         });
+        var token = undefined;
         it('should grant token on user consent', function(done){
             u1.a.post(host + '/authorize')
                 .send({transaction_id: u1.txn})
                 .redirects(0)
-                .end(validate.token(u1, c.uri, 'foo', done));
+                .end(validate.token(u1, c.uri, 'basic', 'foo', done));
         });
         it('should still be authenticated', function(done){
+            token = u1.token;
             u1.a.get(host + '/authorize?' + c.params)
                 .end(validate.requesting_consent_no_redirect(u1, c.params, done));
         });
@@ -283,7 +286,10 @@ describe('implicit grant', function(){
             u1.a.post(host + '/authorize')
                 .send({transaction_id: u1.txn})
                 .redirects(0)
-                .end(validate.token(u1, c.uri, null, done));
+                .end(validate.token(u1, c.uri, 'basic', null, done));
+        });
+        it('should have issued a different token', function(){
+            token.should.not.equal(u1.token);
         });
     });
 });
