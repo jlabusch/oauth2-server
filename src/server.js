@@ -137,6 +137,10 @@ if (cluster.isMaster){
         app.options('/api/userinfo', user.preflight);
         app.get('/api/userinfo', user.info);
 
+        app.get('/healthcheck', function(req, res){
+            res.send(new Date().getTime() + '\r\n');
+        });
+
         app.listen(cfg.auth_server.port, function(){
             log('info', 'Running on port ' + cfg.auth_server.port);
         });
