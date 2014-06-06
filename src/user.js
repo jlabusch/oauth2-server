@@ -2,9 +2,13 @@ var passport = require('passport'),
     log = require('../lib/logging').log,
     librs = require('../lib/resource_server');
 
-librs.load_query(function(err, fn){
+var rsapi = {
+    scopes: []
+};
+
+librs.load_api(function(err, api){
     // TODO: check err
-    query_fn = fn;
+    rsapi = api;
 });
 
 function allowCrossDomain(req, res, next){
@@ -28,11 +32,44 @@ exports.preflight = [
     }
 ]
 
-var query_fn = function(){}
-
-exports.info = [
+exports.api = [
     allowCrossDomain,
     passport.authenticate('bearer', { session: false }),
-    function(req, res){ query_fn(req, res); }
+    function(req, res){
+        var api = rsapi[req.params.fn];
+        if (!api || typeof(api.fn) !== 'function'){
+            var msg = 'No such function /api/' + req.params.fn;
+            log('warn', msg);
+            res.status(404);
+            res.json({
+                success: 0,
+                message: msg,
+                error: 'no such function'
+            });
+            return;
+        }
+        var ss = req.authInfo.scope;
+        if (!req.authInfo.scope){
+            log('warn', 'No scope associated with access token');
+            ss = [rsapi.scopes[0]];
+        }
+        var scope_ok = false,
+            min_scope = rsapi.scopes.indexOf(api.scope);
+        ss.forEach(function(s){
+            scope_ok = scope_ok || rsapi.scopes.indexOf(s) >= min_scope;
+        });
+        if (!scope_ok){
+            res.status(403);
+            var msg = 'Access token has insufficient scope for /api/' + req.params.fn + ' (' + ss.join(', ') + ' vs. ' + api.scope + ')';
+            log('warn', msg);
+            res.json({
+                success: 0,
+                message: msg,
+                error: 'insufficient scope'
+            });
+            return;
+        }
+        return api.fn(req, res);
+    }
 ]
 

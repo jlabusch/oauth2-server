@@ -92,8 +92,7 @@ passport.use(new BearerStrategy(
                 if (!user){
                     return done(null, false);
                 }
-                // TODO: restrictive scopes
-                var info = { scope: '*', site_token: user.site_token };
+                var info = { scope: token.scope, site_token: user.site_token };
                 done(null, user, info);
             });
         });

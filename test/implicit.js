@@ -192,12 +192,17 @@ var validate = {
     }
 };
 
-function client_details(name, uri, state){
+function client_details(name, uri, state, scope){
     uri = uri || 'http://localhost:8080/';
     name = name || 'test';
     return {
         uri: uri,
-        params: encodeURI('response_type=token&client_id=' + name + '&redirect_uri=' + uri + (state ? '&state=' + state : ''))
+        params: encodeURI('response_type=token&client_id=' + name +
+                          '&redirect_uri=' + uri +
+                          (state ? '&state=' + state : '') +
+                          (scope ? '&scope=' + scope : '')),
+        state: state,
+        scope: scope
     };
 }
 
@@ -246,7 +251,7 @@ describe('implicit grant', function(){
     describe('/authorize', function(){
         it('denying consent should redirect back to client', function(done){
             u1.a.post(host + '/authorize')
-                .send({transaction_id: u1.txn, cancel: 'Deny'})
+                .send({transaction_id: u1.txn, cancel: 'Deny', scope: c.scope})
                 .redirects(0) // don't follow any redirects
                 .end(validate.consent_denied(u1, c.uri + '#error=access_denied', done));
         });
@@ -256,13 +261,13 @@ describe('implicit grant', function(){
         });
         it('should preserve state param on failure redirect', function(done){
             u1.a.post(host + '/authorize')
-                .send({transaction_id: u1.txn, cancel: 'Deny'})
+                .send({transaction_id: u1.txn, cancel: 'Deny', scope: c.scope})
                 .redirects(0)
                 .end(validate.consent_denied(u1, c.uri + '#error=access_denied' + '&state=foo', done));
         });
         it('should not allow transaction IDs to be reused after failure', function(done){
             u1.a.post(host + '/authorize')
-                .send({transaction_id: u1.txn})
+                .send({transaction_id: u1.txn, scope: c.scope})
                 .redirects(0)
                 .end(validate.consent_denied_no_tid(u1, c.params + '&state=foo', done));
         });
@@ -273,9 +278,9 @@ describe('implicit grant', function(){
         var token = undefined;
         it('should grant token on user consent', function(done){
             u1.a.post(host + '/authorize')
-                .send({transaction_id: u1.txn})
+                .send({transaction_id: u1.txn, scope: c.scope})
                 .redirects(0)
-                .end(validate.token(u1, c.uri, 'basic', 'foo', done));
+                .end(validate.token(u1, c.uri, 'read-only', 'foo', done));
         });
         it('should still be authenticated', function(done){
             token = u1.token;
@@ -284,12 +289,17 @@ describe('implicit grant', function(){
         });
         it('should allow another token to be granted', function(done){
             u1.a.post(host + '/authorize')
-                .send({transaction_id: u1.txn})
+                .send({transaction_id: u1.txn, scope: 'read-only'})
                 .redirects(0)
-                .end(validate.token(u1, c.uri, 'basic', null, done));
+                .end(validate.token(u1, c.uri, 'read-only', null, done));
         });
         it('should have issued a different token', function(){
             token.should.not.equal(u1.token);
+        });
+        it('should allow API access for new token', function(done){
+            make_user().a.get(host + '/api/profile')
+                         .set('Authorization', 'Bearer ' + u1.token)
+                         .end(validate.api_access(u1, done));
         });
     });
 });

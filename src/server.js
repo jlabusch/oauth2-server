@@ -118,7 +118,7 @@ if (cluster.isMaster){
         // Tied to previous login transaction with session cookie named "sid"
         app.get('/authorize', oauth2.authorization);
 
-        // POST /authorize {transaction_id: T [, cancel: "Deny"]}
+        // POST /authorize {transaction_id: T, scope: S, [, cancel: "Deny"]}
         //
         // User consents/refuses access to the requested scope
         app.post('/authorize', oauth2.decision);
@@ -134,8 +134,8 @@ if (cluster.isMaster){
         //
         // Pulls user metadata from the resource server.
         // Access token passes as Bearer authorization header.
-        app.options('/api/userinfo', user.preflight);
-        app.get('/api/userinfo', user.info);
+        app.options('/api/:fn', user.preflight);
+        app.get('/api/:fn', user.api);
 
         app.get('/healthcheck', function(req, res){
             res.send(new Date().getTime() + '\r\n');

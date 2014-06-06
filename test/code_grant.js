@@ -76,7 +76,7 @@ var validate = {
             should.not.exist(err);
             res.should.have.status(200);
             (!res.redirects).should.be.false;
-            decodeURIComponent(res.redirects[0]).should.equal(host + '/authorize?' + sp_link_params);
+            res.redirects[0].should.equal(host + '/authorize?' + sp_link_params);
             var sid_match = res.headers['set-cookie'].toString().match(/sid=([^;]+)/);
             (null !== sid_match).should.be.true;
             u.sid.should.equal(sid_match[1]);
@@ -195,6 +195,57 @@ var validate = {
             done();
         }
     },
+    api_write_success: function(u, done){
+        return function(err, res){
+            should.not.exist(err);
+            res.should.have.status(200);
+            res.text.should.be.ok;
+            var j = false;
+            try{
+                j = JSON.parse(res.text);
+            }catch(ex){
+                should.not.exist(ex);
+            }
+            j.should.be.ok;
+            should.exist(j.success);
+            (j.success === 1).should.be.true;
+            done();
+        }
+    },
+    api_bad_scope: function(u, done){
+        return function(err, res){
+            res.should.have.status(403);
+            res.text.should.be.ok;
+            var j = false;
+            try{
+                j = JSON.parse(res.text);
+            }catch(ex){
+                should.not.exist(ex);
+            }
+            j.should.be.ok;
+            (j.success === 0).should.be.true;
+            should.exist(j.error);
+            j.error.should.equal('insufficient scope');
+            done();
+        }
+    },
+    api_bad_function: function(u, done){
+        return function(err, res){
+            res.should.have.status(404);
+            res.text.should.be.ok;
+            var j = false;
+            try{
+                j = JSON.parse(res.text);
+            }catch(ex){
+                should.not.exist(ex);
+            }
+            j.should.be.ok;
+            (j.success === 0).should.be.true;
+            should.exist(j.error);
+            j.error.should.equal('no such function');
+            done();
+        }
+    },
     api_err_bad_token: function(u, done){
         return function(err, res){
             should.not.exist(err);
@@ -209,11 +260,11 @@ function client_details(name, uri, state, scope){
     name = name || 'test';
     return {
         uri: uri,
-        params: encodeURI('response_type=code' +
-                          '&client_id=' + name +
-                          '&redirect_uri=' + uri +
-                          (state ? '&state=' + state : '') +
-                          (scope ? '&scope=' + scope : '')),
+        params: 'response_type=code' +
+                '&client_id=' + encodeURIComponent(name) +
+                '&redirect_uri=' + encodeURIComponent(uri) +
+                (state ? '&state=' + encodeURIComponent(state) : '') +
+                (scope ? '&scope=' + encodeURIComponent(scope) : ''),
         state: state,
         scope: scope
     };
@@ -378,7 +429,7 @@ describe('code grant back channel', function(){
                          .end(validate.token(u1, done, true));
         });
         it('should allow API access', function(done){
-            make_user().a.get(host + '/api/userinfo')
+            make_user().a.get(host + '/api/profile')
                          .set('Authorization', 'Bearer ' + u1.token)
                          .end(validate.api_access(u1, done));
         });
@@ -412,12 +463,12 @@ describe('code grant back channel', function(){
             old_token.should.not.equal(u1.token);
         });
         it('should NOT allow API access (old token)', function(done){
-            make_user().a.get(host + '/api/userinfo')
+            make_user().a.get(host + '/api/profile')
                          .set('Authorization', 'Bearer ' + old_token)
                          .end(validate.api_err_bad_token(u1, done));
         });
         it('should allow API access (new token)', function(done){
-            make_user().a.get(host + '/api/userinfo')
+            make_user().a.get(host + '/api/profile')
                          .set('Authorization', 'Bearer ' + u1.token)
                          .end(validate.api_access(u1, done));
         });
@@ -425,7 +476,7 @@ describe('code grant back channel', function(){
 
     describe('explicit scopes', function(){
         var u3 = make_user(),
-            c2 = client_details('test', null, null, 'profile');
+            c2 = client_details('test', null, null, 'read-only');
 
         it('should grant initial code', grant_initial_code(u3, 'bob@example.com', c2));
         it('should exchange code for token', function(done){
@@ -438,10 +489,52 @@ describe('code grant back channel', function(){
                          })
                          .end(validate.token(u3, done, true, c2.scope));
         });
-        it('should allow API access', function(done){
-            make_user().a.get(host + '/api/userinfo')
+        it('should allow read-only access', function(done){
+            make_user().a.get(host + '/api/profile')
                          .set('Authorization', 'Bearer ' + u3.token)
                          .end(validate.api_access(u3, done));
+        });
+        it('should not allow write access', function(done){
+            make_user().a.get(host + '/api/update_avatar')
+                         .set('Authorization', 'Bearer ' + u3.token)
+                         .end(validate.api_bad_scope(u3, done));
+        });
+        it('should not allow access to missing functions', function(done){
+            make_user().a.get(host + '/api/cheese')
+                         .set('Authorization', 'Bearer ' + u3.token)
+                         .end(validate.api_bad_function(u3, done));
+        });
+    });
+
+    describe('multiple scopes', function(){
+        var u4 = make_user(),
+            c3 = client_details('test', null, null, 'read-only read-write');
+
+        it('should grant initial code', grant_initial_code(u4, 'bob@example.com', c3));
+        it('should exchange code for token', function(done){
+            make_user().a.post(host + '/token')
+                         .auth('test', 'hunter2')
+                         .send({
+                            grant_type: 'authorization_code',
+                            code: u4.code,
+                            redirect_uri: c3.uri
+                         })
+                         .end(validate.token(u4, done, true, c3.scope));
+        });
+        it('should allow read-only access', function(done){
+            make_user().a.get(host + '/api/profile')
+                         .set('Authorization', 'Bearer ' + u4.token)
+                         .end(validate.api_access(u4, done));
+        });
+        it('should allow write access', function(done){
+            make_user().a.get(host + '/api/update_avatar')
+                         .set('Authorization', 'Bearer ' + u4.token)
+                         .end(validate.api_write_success(u4, done));
+        });
+        it('should not allow access to missing functions', function(done){
+            make_user().a.get(host + '/api/cheese')
+                         .set('Authorization', 'Bearer ' + u4.token)
+                         .end(validate.api_bad_function(u4, done));
         });
     });
 
@@ -496,12 +589,12 @@ describe('code grant back channel', function(){
                          .end(validate.token_err_bad_refresh_token(u1, done, true));
         });
         it('should not allow API access for old token', function(done){
-            make_user().a.get(host + '/api/userinfo')
+            make_user().a.get(host + '/api/profile')
                          .set('Authorization', 'Bearer ' + old_tok)
                          .end(validate.api_err_bad_token(u1, done));
         });
         it('should allow API access for new token', function(done){
-            make_user().a.get(host + '/api/userinfo')
+            make_user().a.get(host + '/api/profile')
                          .set('Authorization', 'Bearer ' + u1.token)
                          .end(validate.api_access(u1, done));
         });

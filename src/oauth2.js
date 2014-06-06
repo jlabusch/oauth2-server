@@ -5,6 +5,7 @@ var oauth2orize = require('oauth2orize'),
     config = require('../lib/config'),
     db = require('../db'),
     shorten = require('../lib/logging').format_sid,
+    valid_scopes = require('../lib/resource_server').scopes,
     utils = require('../lib/utils');
 
 // TODO: Any time we want to deny access we must call done(null, false) rather than done(err).
@@ -22,7 +23,6 @@ var server = oauth2orize.createServer();
 // client object is serialized into the session.  Typically this will be a
 // simple matter of serializing the client's ID, and deserializing by finding
 // the client by ID from the database.
-
 server.serializeClient(function(client, done){
     return done(null, client.id);
 });
@@ -49,7 +49,6 @@ server.deserializeClient(function(id, done){
 // their response, which contains approved scope, duration, etc. as parsed by
 // the application.  The application issues a code, which is bound to these
 // values, and will be exchanged for an access token.
-
 server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, done){
     if (client.allow_code_grant !== true){
         log('warn', 'Code grant not allowed for client ' + client.id + ' (' + client.client_id + ')');
@@ -62,7 +61,7 @@ server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, do
             log('error', "Couldn't save authorization code " + shorten(code) + ': ' + err);
             return done(err);
         }
-        log('notice', 'allocated code ' + shorten(code) + ' to ' + user.id);
+        log('notice', 'Allocated code ' + shorten(code) + ' to ' + user.id);
         done(null, code);
     });
 }));
@@ -77,7 +76,6 @@ server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, do
 // that uses the implicit grant pattern as though you were Alice.
 // With the Auth Code Grant pattern you're still open to this kind of attack from
 // malicious Clients, but not from compromised User Agents.
-
 server.grant(oauth2orize.grant.token(function(client, user, ares, done){
     if (client.allow_implicit_grant !== true){
         log('warn', 'Implicit grant not allowed for client ' + client.id + ' (' + client.client_id + ')');
@@ -92,7 +90,7 @@ server.grant(oauth2orize.grant.token(function(client, user, ares, done){
             if (put_err){
                 return done(put_err);
             }
-            log('notice', 'allocated token ' + shorten(token) + ' to ' + client.id + '.' + user.id);
+            log('notice', 'Allocated token ' + shorten(token) + ' to ' + client.id + '.' + user.id);
             var params = {expires_in: db.accessTokens.expires_in() || 0};
             // Scope was validated earlier on.
             params.scope = ares.scope || ['basic'];
@@ -101,7 +99,7 @@ server.grant(oauth2orize.grant.token(function(client, user, ares, done){
     });
 }));
 
-// Allocate an access token and refresh token.
+// Allocate an access token and refresh token for the Auth Code Grant pattern.
 // The existing tokens will always be revoked if they exist.
 function allocate_and_save_token(userID, clientID, scope, done){
     db.accessTokens.revoke(userID, clientID, function(err){
@@ -154,7 +152,6 @@ function allocate_and_save_token(userID, clientID, scope, done){
 // If the entire Client DB is compromised, i.e. access tokens AND refresh
 // tokens, then the one-time-use nature of refresh tokens gives you a hint
 // that something bad is going on.
-
 server.exchange(oauth2orize.exchange.refreshToken(function(client, refreshToken, done){
     db.refreshTokens.find(refreshToken, function(err, rtok){
         if (err){
@@ -204,25 +201,24 @@ server.exchange(oauth2orize.exchange.refreshToken(function(client, refreshToken,
 // authorization request for verification.  If these values are validated, the
 // application issues an access token on behalf of the user who authorized the
 // code.
-
 server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, done){
     db.authorizationCodes.find(code, function(err, authCode){
         if (err){
-            log('error', "couldn't exchange code " + shorten(code) + ": " + err);
+            log('error', "Couldn't exchange code " + shorten(code) + ": " + err);
             return done(err);
         }
         var ok = true;
         if (!authCode){
-            log('warn', "couldn't exchange code " + shorten(code) + ' for client ' + client.id + ", invalid code");
+            log('warn', "Couldn't exchange code " + shorten(code) + ' for client ' + client.id + ", invalid code");
             ok = false;
         }else if (client.id !== authCode.clientID){
-            log('warn', "couldn't exchange code " + shorten(code) + ' for client ' + client.id + ", actually allocated to client " + authCode.clientID);
+            log('warn', "Couldn't exchange code " + shorten(code) + ' for client ' + client.id + ", actually allocated to client " + authCode.clientID);
             ok = false;
         }else if (client.allow_code_grant !== true){
-            log('warn', "couldn't exchange code " + shorten(code) + ' for client ' + client.id + ": config disabled");
+            log('warn', "Couldn't exchange code " + shorten(code) + ' for client ' + client.id + ": config disabled");
             ok = false;
         }else if (redirectURI !== authCode.redirectURI){
-            log('warn', "couldn't exchange code " + shorten(code) + ' for client ' + client.id + ": bad redirect URI " + redirectURI);
+            log('warn', "Couldn't exchange code " + shorten(code) + ' for client ' + client.id + ": bad redirect URI " + redirectURI);
             ok = false;
         }
         if (!ok){
@@ -233,7 +229,7 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
                         log('error', 'Failed to delete tainted code ' + shorten(code));
                         return done(err);
                     }
-                    log('notice', 'deleted code ' + shorten(code) + ', no token issued.');
+                    log('notice', 'Deleted code ' + shorten(code) + ', no token issued.');
                     done(null, false);
                 });
             }else{
@@ -276,7 +272,6 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
 // to obtain their approval (displaying details about the client requesting
 // authorization).  We accomplish that here by routing through `ensureLoggedIn()`
 // first, and rendering the `dialog` view. 
-
 exports.authorization = [
     login.ensureLoggedIn(),
     server.authorization(function(clientID, redirectURI, done){
@@ -296,13 +291,35 @@ exports.authorization = [
         });
     }),
     function(req, res){
+        var scope = [];
+        if (!req.oauth2.req.scope || req.oauth2.req.scope.length < 1){
+            scope = [valid_scopes()[0]];
+            log('debug', 'No scope specified, using ' + scope[0]);
+        }else{
+            // validate listed scopes
+            req.oauth2.req.scope.forEach(function(s){
+                if (valid_scopes().indexOf(s) < 0){
+                    s = valid_scopes()[0]; // side-effect: "*" defaults to smallest scope, not largest.
+                }
+                scope.push(s);
+            });
+            // remove duplicates
+            scope = scope.reduce(function(prev, current){
+                if (prev.indexOf(current) < 0){
+                    prev.push(current);
+                }
+                return prev;
+            }, []);
+            log('debug', scope.length + ' scopes specified: ' + scope.join(', '));
+        }
+        req.oauth2.req.validated_scopes = scope;
         res.render(
             config.get('auth_server').views.dialog,
             {
                 transactionID: req.oauth2.transactionID,
                 user: req.user,
                 client: req.oauth2.client,
-                scope: req.oauth2.req.scope || [] // TODO: validate scope
+                scope: scope
             }
         );
     }
@@ -314,13 +331,12 @@ exports.authorization = [
 // requested by a client application.  Based on the grant type requested by the
 // client, the above grant middleware configured above will be invoked to send
 // a response.
-
 exports.decision = [
     login.ensureLoggedIn(),
     server.decision(function(req, done){
+        var userID = req.user.id,
+            clientID = req.oauth2.client.id;
         if (req.body['cancel']){
-            var userID = req.user.id,
-                clientID = req.oauth2.client.id;
             if (userID && clientID){
                 log('notice', 'Revoking consent for ' + clientID + '.' + userID);
                 return db.accessTokens.revoke(userID, clientID, done);
@@ -328,9 +344,16 @@ exports.decision = [
                 log('error', 'Can\'t revoke consent for ' + clientID + '.' + userID);
             }
         }
-        // TODO: validate scope
-        var scope = req.body['scope'] || 'basic';
-        done(null, {scope: scope.split(' ')});
+        if (req.oauth2.req.validated_scopes.join(' ') !== req.body['scope']){
+            log('warn', '/authorization scope mismatch for user ' + userID + ' client ' + clientID +
+                        ' (' + req.body['scope'] + ' vs. ' + req.oauth2.req.validated_scopes.join(', ') + ')');
+            // In future it'd be nice to allow the POST to only approve a subset
+            // of the requested scopes.
+        }
+        var scope = req.body['scope'] || valid_scopes()[0];
+        scope = scope.split(/\s+/);
+        log('debug', 'Consent ' + (req.body['cancel'] ? 'not ' : '') + 'granted for scopes ' + scope.join(', '));
+        done(null, {scope: scope});
     })
 ]
 
@@ -341,7 +364,6 @@ exports.decision = [
 // for access tokens.  Based on the grant type being exchanged, the above
 // exchange middleware will be invoked to handle the request.  Clients must
 // authenticate when making requests to this endpoint.
-
 exports.token = [
     passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
     server.token(),
