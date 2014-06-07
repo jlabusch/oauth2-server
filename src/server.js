@@ -130,6 +130,17 @@ if (cluster.isMaster){
         // The redirect URI must appear in the validRedirects list for that Client.
         app.post('/token', oauth2.token);
 
+        // GET /review
+        //
+        // Allows users to review/revoke any existing tokens they've issued
+        app.get('/review', oauth2.authorization_review);
+
+        // POST /review {revoke: [<client_id>, ...] [, cancel: "Cancel"]}
+        //
+        // Act on the decisions taken in /review. Revokes both access tokens and refresh tokens
+        // for the listed clients
+        app.post('/review', oauth2.decision_update);
+
         // GET /api/userinfo
         //
         // Pulls user metadata from the resource server.

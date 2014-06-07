@@ -476,12 +476,12 @@ describe('code grant back channel', function(){
 
     describe('explicit scopes', function(){
         var u3 = make_user(),
-            c2 = client_details('test', null, null, 'read-only');
+            c2 = client_details('sp-demo', null, null, 'read-only');
 
         it('should grant initial code', grant_initial_code(u3, 'bob@example.com', c2));
         it('should exchange code for token', function(done){
             make_user().a.post(host + '/token')
-                         .auth('test', 'hunter2')
+                         .auth('sp-demo', 'hunter2')
                          .send({
                             grant_type: 'authorization_code',
                             code: u3.code,

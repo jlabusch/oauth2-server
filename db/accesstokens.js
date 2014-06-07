@@ -1,5 +1,8 @@
 var storage = require('../lib/store'),
     store = null,
+    clients = require('../db/clients'),
+    prefix = require('../lib/utils').prefix,
+    pluck = require('../lib/utils').pluck,
     log = require('../lib/logging').log;
 
 storage.create('tokens', function(err, obj){
@@ -8,7 +11,7 @@ storage.create('tokens', function(err, obj){
 });
 
 function index_key(u, c){
-    return 'u:' + u + ':c:' + c;
+    return 'u:' + u + ':c:' + (c?c:'');
 }
 
 exports.expires_in = function(){
@@ -20,7 +23,12 @@ exports.find = function(token, done){
 };
 
 exports.find_by_user = function(userID, clientID, done){
-    store.get(index_key(userID, clientID), done);
+    if (clientID){
+        store.get(index_key(userID, clientID), done);
+    }else{
+        // Get the tokens for all clients
+        store.get(prefix(index_key(userID), pluck('id', clients.list())), done);
+    }
 };
 
 exports.save = function(token, userID, clientID, scope, done){

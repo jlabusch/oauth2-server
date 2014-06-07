@@ -2,7 +2,7 @@ var fs = require('fs'),
     log = require('../lib/logging.js').log,
     config = require('../lib/config');
 
-var clients = {};
+var clients = [];
 
 function reload(){
     var filename = config.get('client_credentials').file;
@@ -18,6 +18,14 @@ function reload(){
 }
 
 config.on('loaded', reload);
+
+exports.list = function(){
+    var r = [];
+    clients.forEach(function(c){
+        r.push({id: c.id, name: c.name});
+    });
+    return r;
+}
 
 exports.find = function(id, done){
     for (var i = 0, len = clients.length; i < len; i++){

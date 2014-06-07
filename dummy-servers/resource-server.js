@@ -35,17 +35,16 @@ app.post('/login', function(req, res){
     h.update(username + ':' + password);
     var token = h.digest('hex');
     res.cookie('dummy-server-token', token);
-    users[token] = {id: username, name: 'user_' + Object.keys(users).length};
+    users[token] = {id: username, firstName: username.match(/^([^.@]+)/)[1]};
     logger.log('debug', token + ' => ' + JSON.stringify(users[token]));
-    var r = {id: username};
-    logger.log('debug', '/login response ' + JSON.stringify(r));
-    res.json(r);
+    logger.log('notice', '/login response ' + JSON.stringify(users[token]));
+    res.json(users[token]);
 });
 
 app.get('/info', function(req, res){
     var token = req.param('token');
     var r = token && users[token] || {};
-    logger.log('debug', '/info response ' + JSON.stringify(r) + ' for ' + token);
+    logger.log('notice', '/info response ' + JSON.stringify(r) + ' for ' + token);
     res.json(r);
 });
 

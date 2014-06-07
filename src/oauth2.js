@@ -8,7 +8,6 @@ var oauth2orize = require('oauth2orize'),
     valid_scopes = require('../lib/resource_server').scopes,
     utils = require('../lib/utils');
 
-// TODO: Any time we want to deny access we must call done(null, false) rather than done(err).
 var server = oauth2orize.createServer();
 
 // Register serialialization and deserialization functions.
@@ -255,7 +254,22 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
     });
 }));
 
-
+function valid_client(clientID, redirectURI, done){
+    db.clients.findByClientId(clientID, function(err, client){
+        if (err){
+            return done(err);
+        }
+        if (!client){
+            log('warn', 'Invalid redirect client ID ' + clientID);
+            return done('Invalid client ID');
+        }
+        if (client.valid_redirects.indexOf(redirectURI) < 0){
+            log('warn', 'Invalid redirect URI for client ' + client.id + ' (' + client.client_id + ') - ' + redirectURI);
+            return done('Invalid redirect URI ' + redirectURI);
+        }
+        return done(null, client, redirectURI);
+    });
+}
 
 // user authorization endpoint
 //
@@ -274,22 +288,7 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
 // first, and rendering the `dialog` view. 
 exports.authorization = [
     login.ensureLoggedIn(),
-    server.authorization(function(clientID, redirectURI, done){
-        db.clients.findByClientId(clientID, function(err, client){
-            if (err){
-                return done(err);
-            }
-            if (!client){
-                log('warn', 'Invalid redirect client ID ' + clientID);
-                return done('Invalid client ID');
-            }
-            if (client.valid_redirects.indexOf(redirectURI) < 0){
-                log('warn', 'Invalid redirect URI for client ' + client.id + ' (' + client.client_id + ') - ' + redirectURI);
-                return done('Invalid redirect URI ' + redirectURI);
-            }
-            return done(null, client, redirectURI);
-        });
-    }),
+    server.authorization(valid_client),
     function(req, res){
         var scope = [];
         if (!req.oauth2.req.scope || req.oauth2.req.scope.length < 1){
@@ -313,8 +312,10 @@ exports.authorization = [
             log('debug', scope.length + ' scopes specified: ' + scope.join(', '));
         }
         req.oauth2.req.validated_scopes = scope;
+        var v = config.get('auth_server').views.dialog;
+        log('info', 'rendering ' + v + ' for TID ' + req.oauth2.transactionID);
         res.render(
-            config.get('auth_server').views.dialog,
+            v,
             {
                 transactionID: req.oauth2.transactionID,
                 user: req.user,
@@ -322,6 +323,53 @@ exports.authorization = [
                 scope: scope
             }
         );
+    }
+]
+
+// user authorization review endpoint
+//
+// Based on the authorization endpoint above, this endpoint allows users to review
+// the list of Clients that tokens have been granted to, and revoke as many of those
+// tokens as they wish.
+exports.authorization_review = [
+    login.ensureLoggedIn(),
+    function(req, res, next){
+        var client = req.query.client_id,
+            redir = req.query.redirect_uri;
+        valid_client(client, redir, next);
+    },
+    function(req, res, next){
+        // TODO: Also look at access tokens, not just refresh tokens.
+        db.refreshTokens.find_by_user(req.user.id, null, function(err, tokens){
+            if (err){
+                log('error', 'Can\'t find existing tokens for user ' + req.user.id);
+                // TODO: render error page
+                return next("Tokens not found");
+            }
+            db.refreshTokens.find(tokens, function(err, details){
+                if (err){
+                    // This can happen if you get unlucky with tokens expiring as
+                    // this code is executed.
+                    log('error', 'Can\'t find token details for user ' + req.user.id);
+                    // TODO: render error page
+                    return next("Tokens not found");
+                }
+                req.oauth2 = req.oauth2 || {};
+                req.oauth2.transactionID = utils.uid(16);
+                var v = config.get('auth_server').views.review;
+                log('info', 'rendering ' + v + ' for TID ' + req.oauth2.transactionID);
+                res.render(
+                    v,
+                    {
+                        transactionID: req.oauth2.transactionID,
+                        user: req.user,
+                        client: req.oauth2.client,
+                        grants: details
+                    },
+                    next
+                );
+            });
+        });
     }
 ]
 
@@ -357,6 +405,22 @@ exports.decision = [
     })
 ]
 
+// user decision update endpoint
+//
+// `decision` middleware for processing authorization_review interactions.
+exports.decision_update = [
+    login.ensureLoggedIn(),
+    server.decision(function(req, done){
+        var userID = req.user.id,
+            clientID = req.oauth2.client.id;
+        if (req.body['cancel']){
+            log('notice', 'No changes requested to grants for user ' + userID + ' client ' + clientID);
+            done(null);
+        }
+        // TODO
+        done(null);
+    })
+]
 
 // token endpoint
 //

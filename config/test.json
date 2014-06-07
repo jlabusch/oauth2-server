@@ -9,7 +9,7 @@
         "user_agent": "OAuth-IdP/0.4.0"
     },
     "logging": {
-        "level": "info",
+        "level": "debug",
         "short_sid": true
     }
 }

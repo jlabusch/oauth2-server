@@ -9,7 +9,8 @@
         "views": {
             "layout": "layout",
             "login": "login",
-            "dialog": "dialog"
+            "dialog": "dialog",
+            "review": "review"
         }
     },
     "client_credentials": {
@@ -64,7 +65,7 @@
         "user_agent": "OAuth-IdP/0.4.0"
     },
     "logging": {
-        "level": "notice",
+        "level": "debug",
         "short_sid": true
     }
 }
