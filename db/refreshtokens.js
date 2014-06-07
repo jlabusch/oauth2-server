@@ -1,8 +1,7 @@
 var storage = require('../lib/store'),
     store = null,
     clients = require('../db/clients'),
-    prefix = require('../lib/utils').prefix,
-    pluck = require('../lib/utils').pluck,
+    prepender = require('../lib/utils').prepender,
     log = require('../lib/logging').log;
 
 storage.create('refresh_tokens', function(err, obj){
@@ -23,7 +22,7 @@ exports.find_by_user = function(userID, clientID, done){
         store.get(index_key(userID, clientID), done);
     }else{
         // Get the tokens for all clients
-        store.get(prefix(index_key(userID), pluck('id', clients.list())), done);
+        store.get(clients.list().map(prepender(index_key(userID))), done);
     }
 };
 

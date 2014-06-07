@@ -22,9 +22,19 @@ config.on('loaded', reload);
 exports.list = function(){
     var r = [];
     clients.forEach(function(c){
-        r.push({id: c.id, name: c.name});
+        r.push(c.id);
     });
     return r;
+}
+
+exports.name = function(id){
+    var n = null;
+    clients.forEach(function(c){
+        if (c.id === id){
+            n = c.name;
+        }
+    });
+    return n;
 }
 
 exports.find = function(id, done){

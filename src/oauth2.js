@@ -80,7 +80,7 @@ server.grant(oauth2orize.grant.token(function(client, user, ares, done){
         log('warn', 'Implicit grant not allowed for client ' + client.id + ' (' + client.client_id + ')');
         return done('Implicit Grant not allowed for this Client');
     }
-    db.accessTokens.revoke(user, client, function(err){
+    db.accessTokens.revoke(user.id, client.id, function(err){
         if (err){
             log('warn', 'Error revoking access token for user ' + userID + ' client ' + clientID + ': ' + err);
         }
@@ -346,14 +346,7 @@ exports.authorization_review = [
                 // TODO: render error page
                 return next("Tokens not found");
             }
-            db.refreshTokens.find(tokens, function(err, details){
-                if (err){
-                    // This can happen if you get unlucky with tokens expiring as
-                    // this code is executed.
-                    log('error', 'Can\'t find token details for user ' + req.user.id);
-                    // TODO: render error page
-                    return next("Tokens not found");
-                }
+            function render(details){
                 req.oauth2 = req.oauth2 || {};
                 req.oauth2.transactionID = utils.uid(16);
                 var v = config.get('auth_server').views.review;
@@ -364,11 +357,25 @@ exports.authorization_review = [
                         transactionID: req.oauth2.transactionID,
                         user: req.user,
                         client: req.oauth2.client,
-                        grants: details
-                    },
-                    next
+                        grants: details.map(function(d){
+                                    d.clientName = db.clients.name(d.clientID);
+                                    return d;
+                                })
+                    }
                 );
-            });
+            }
+            if (tokens && tokens.length){
+                db.refreshTokens.find(tokens, function(err, details){
+                    if (err){
+                        log('error', 'Can\'t find token details for user ' + req.user.id);
+                        // TODO: render error page
+                        return next("Internal error while looking up tokens");
+                    }
+                    render(details);
+                });
+            }else{
+                render([]);
+            }
         });
     }
 ]
