@@ -334,48 +334,62 @@ exports.authorization = [
 exports.authorization_review = [
     login.ensureLoggedIn(),
     function(req, res, next){
-        var client = req.query.client_id,
-            redir = req.query.redirect_uri;
-        valid_client(client, redir, next);
-    },
-    function(req, res, next){
-        // TODO: Also look at access tokens, not just refresh tokens.
-        db.refreshTokens.find_by_user(req.user.id, null, function(err, tokens){
+        if (!req.session){
+            log('error', 'No session support found.');
+            return next(new Error('Missing session support.'));
+        }
+        valid_client(req.query.client_id, req.query.redirect_uri, function(err, client, redirectURI){
             if (err){
-                log('error', 'Can\'t find existing tokens for user ' + req.user.id);
-                // TODO: render error page
-                return next("Tokens not found");
+                return next(new Error("Unauthorized Client"));
             }
-            function render(details){
-                req.oauth2 = req.oauth2 || {};
-                req.oauth2.transactionID = utils.uid(16);
-                var v = config.get('auth_server').views.review;
-                log('info', 'rendering ' + v + ' for TID ' + req.oauth2.transactionID);
-                res.render(
-                    v,
-                    {
-                        transactionID: req.oauth2.transactionID,
-                        user: req.user,
-                        client: req.oauth2.client,
-                        grants: details.map(function(d){
-                                    d.clientName = db.clients.name(d.clientID);
-                                    return d;
-                                })
+            // TODO: Also look at access tokens, not just refresh tokens.
+            //       (Implicit Grants may never allocate refresh tokens.)
+            // TODO: Could really use a custom error page.
+            db.refreshTokens.find_by_user(req.user.id, null, function(err, tokens){
+                if (err){
+                    log('error', 'Can\'t find existing tokens for user ' + req.user.id);
+                    return next(new Error("Internal error while searching for token grants"));
+                }
+                function render(details){
+                    req.session['review'] = req.session['review'] || {};
+                    if (Array.isArray(details) == false){
+                        details = [details];
                     }
-                );
-            }
-            if (tokens && tokens.length){
-                db.refreshTokens.find(tokens, function(err, details){
-                    if (err){
-                        log('error', 'Can\'t find token details for user ' + req.user.id);
-                        // TODO: render error page
-                        return next("Internal error while looking up tokens");
-                    }
-                    render(details);
-                });
-            }else{
-                render([]);
-            }
+                    details = details.map(function(d){
+                        d.clientName = db.clients.name(d.clientID);
+                        return d;
+                    });
+                    var tid = utils.uid(16);
+                    req.session['review'][tid] = {
+                        client: client.id,
+                        redirectURI: redirectURI,
+                        transactionID: tid,
+                        grants: details
+                    };
+                    var v = config.get('auth_server').views.review;
+                    log('info', 'rendering ' + v + ' for TID ' + shorten(tid));
+                    res.render(
+                        v,
+                        {
+                            transactionID: tid,
+                            user: req.user,
+                            client: {id: client.id, clientName: client.name},
+                            grants: details
+                        }
+                    );
+                }
+                if (tokens && tokens.length){
+                    db.refreshTokens.find(tokens, function(err, details){
+                        if (err){
+                            log('error', 'Can\'t find token details for user ' + req.user.id);
+                            return next(new Error("Internal error while searching for token grants"));
+                        }
+                        render(details);
+                    });
+                }else{
+                    render([]);
+                }
+            });
         });
     }
 ]
@@ -394,7 +408,13 @@ exports.decision = [
         if (req.body['cancel']){
             if (userID && clientID){
                 log('notice', 'Revoking consent for ' + clientID + '.' + userID);
-                return db.accessTokens.revoke(userID, clientID, done);
+                db.refreshTokens.revoke(userID, clientID, function(err){
+                    if (err){
+                        return done(err);
+                    }
+                    db.accessTokens.revoke(userID, clientID, done);
+                });
+                return;
             }else{
                 log('error', 'Can\'t revoke consent for ' + clientID + '.' + userID);
             }
@@ -417,16 +437,61 @@ exports.decision = [
 // `decision` middleware for processing authorization_review interactions.
 exports.decision_update = [
     login.ensureLoggedIn(),
-    server.decision(function(req, done){
-        var userID = req.user.id,
-            clientID = req.oauth2.client.id;
-        if (req.body['cancel']){
-            log('notice', 'No changes requested to grants for user ' + userID + ' client ' + clientID);
-            done(null);
+    function(req, res, next){
+        // Based on the oauth2orize transactionLoader middleware
+        if (!req.session){
+            log('error', 'No session support found.');
+            return next(new Error('Missing session support.'));
         }
-        // TODO
-        done(null);
-    })
+        var tid = req.body['transaction_id'];
+        if (!tid){
+            log('error', '/review POST missing transaction_id');
+            return next(new Error('Missing required parameter transaction_id'));
+        }
+        var txn = req.session['review'][tid];
+        if (!txn){
+            log('error', '/review POST failed to load transaction context ' + shorten(tid));
+            return next(new Error('Unable to load /review transaction ' + tid));
+        }
+        if (!txn.transactionID || !txn.client || !txn.redirectURI || !txn.grants){
+            log('error', '/review POST loaded incomplete transaction context ' + shorten(tid));
+            return next(new Error('Unable to load /review transaction ' + tid));
+        }
+        db.clients.find(txn.client, function(err, client){ // Usually done by server.deserializeClient()
+            // Based on oauth2orize decision middleware
+            if (err){
+                log('error', "Couldn't load client " + txn.client + ': ' + err);
+                return next(new Error('Unauthorized Client'));
+            }
+            if (!client){
+                log('error', "No such client " + txn.client);
+                return next(new Error('Unauthorized Client'));
+            }
+            txn.grants
+                .reduce(function(to_remove, g){
+                    if (req.body[g.clientID] !== 'on'){
+                        to_remove.push(g);
+                    }
+                    return to_remove;
+                }, [])
+                .forEach(function(g){
+                    db.refreshTokens.revoke(g.userID, g.clientID, function(err){
+                        if (err){
+                            log('warn', "Coudln't revoke refresh token for user " +
+                                        g.userID + ' client ' + g.clientID + ': ' + err);
+                        }
+                        db.accessTokens.revoke(g.userID, g.clientID, function(err){
+                            if (err){
+                                log('warn', "Coudln't revoke access token for user " +
+                                            g.userID + ' client ' + g.clientID + ': ' + err);
+                            }
+                        });
+                    });
+                });
+            // TODO: go via a "flash" waypoint to show success/failure
+            res.redirect(txn.redirectURI);
+        });
+    }
 ]
 
 // token endpoint

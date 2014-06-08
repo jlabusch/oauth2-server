@@ -6,11 +6,16 @@
           </div>
           <div class="panel-body">
             <p>Hi <%= user.firstName %>,</p>
-            <pre><%= JSON.stringify(grants, null, 3) %></pre>
+            <p>Here's a chance to review the sites that have access to your details. Any you un-check
+            will have their access revoked.</p>
+            <%
+                grants.forEach(function(g){
+                    %><p><input name="<%= g.clientID %>" type="checkbox" checked>&nbsp;<strong><%= g.clientName %></strong> (<%= g.scope.join(", ") %>)</p><%
+                });
+            %>
           </div>
         </div>
         <input name="transaction_id" type="hidden" value="<%= transactionID %>">
-        <button class="btn btn-lg btn-primary btn-block" type="submit" value="Allow" id="allow">Done</button>
-        <button name="cancel" class="btn btn-lg btn-primary btn-block" type="submit" value="Cancel" id="deny">Cancel</button>
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Done</button>
       </form>
     </div>

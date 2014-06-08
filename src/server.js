@@ -86,7 +86,13 @@ if (cluster.isMaster){
         app.use(http_log());
         app.use(express.cookieParser());
         app.use(express.bodyParser());
-        app.use(express.session({store: store, secret: cfg.auth_server.session_secret, key: 'sid', cookie: {secure: cfg.auth_server.ssl}}));
+        app.use(express.session({
+            store: store,
+            secret: cfg.auth_server.session_secret,
+            key: 'sid',
+            // TODO: proxy: !cfg.auth_server.ssl, cookie.secure always true
+            cookie: {secure: cfg.auth_server.ssl}
+        }));
         app.use(passport.initialize());
         app.use(passport.session());
         // TODO: We need to replace the standard Express error handler.
