@@ -66,6 +66,6 @@
     },
     "logging": {
         "level": "notice",
-        "short_sid": false
+        "short_sid": true
     }
 }
