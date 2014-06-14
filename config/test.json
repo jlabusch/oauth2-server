@@ -10,6 +10,6 @@
     },
     "logging": {
         "level": "debug",
-        "short_sid": false
+        "short_sid": true
     }
 }

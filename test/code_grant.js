@@ -252,6 +252,15 @@ var validate = {
             res.should.have.status(401);
             done();
         }
+    },
+    showing_review_page: function(done){
+        return function(err, res){
+            should.not.exist(err);
+            res.should.have.status(200);
+            (!res.redirects).should.be.false;
+            res.redirects.length.should.equal(0);
+            done();
+        }
     }
 };
 
@@ -266,8 +275,39 @@ function client_details(name, uri, state, scope){
                 (state ? '&state=' + encodeURIComponent(state) : '') +
                 (scope ? '&scope=' + encodeURIComponent(scope) : ''),
         state: state,
+        name: name,
         scope: scope
     };
+}
+
+function grant_initial_code(uN, username, client){
+    client = client || client_details('test');
+    return function(done){
+        uN.a.get(host + '/authorize?' + client.params)
+            .end(validate.challenge(uN, function(){
+                uN.a.post(host + '/login')
+                    .send({username: username, password: good_password})
+                    .end(validate.requesting_consent_after_redirect(uN, client.params, function(){
+                        uN.a.post(host + '/authorize')
+                            .send({transaction_id: uN.txn, scope: client.scope})
+                            .redirects(0)
+                            .end(validate.code_granted(uN, client.params, done));
+                    }))
+            }))
+    }
+}
+
+function grant_subsequent_code(uN, client){
+    client = client || client_details('test');
+    return function(done){
+        uN.a.get(host + '/authorize?' + client.params)
+            .end(validate.requesting_consent_no_redirect(uN, client.params, function(){
+                uN.a.post(host + '/authorize')
+                    .send({transaction_id: uN.txn, scope: client.scope})
+                    .redirects(0)
+                    .end(validate.code_granted(uN, client.params, done));
+            }))
+    }
 }
 
 describe('code grant front channel', function(){
@@ -363,34 +403,6 @@ describe('code grant back channel', function(){
     var c = client_details('test'),
         u1 = null;
 
-    function grant_initial_code(uN, username, client){
-        client = client || c;
-        return function(done){
-            uN.a.get(host + '/authorize?' + client.params)
-                .end(validate.challenge(uN, function(){
-                    uN.a.post(host + '/login')
-                        .send({username: username, password: good_password})
-                        .end(validate.requesting_consent_after_redirect(uN, client.params, function(){
-                            uN.a.post(host + '/authorize')
-                                .send({transaction_id: uN.txn, scope: client.scope})
-                                .redirects(0)
-                                .end(validate.code_granted(uN, client.params, done));
-                        }))
-                }))
-        }
-    }
-    function grant_subsequent_code(uN, client){
-        client = client || c;
-        return function(done){
-            uN.a.get(host + '/authorize?' + client.params)
-                .end(validate.requesting_consent_no_redirect(uN, client.params, function(){
-                    uN.a.post(host + '/authorize')
-                        .send({transaction_id: uN.txn, scope: client.scope})
-                        .redirects(0)
-                        .end(validate.code_granted(uN, client.params, done));
-                }))
-        }
-    }
 
     describe('/token', function(){
         u1 = make_user();
@@ -606,6 +618,51 @@ describe('code grant back channel', function(){
                              refresh_token: u1.refresh_token
                          })
                          .end(validate.token(u1, done, true));
+        });
+    });
+});
+
+describe('revoke access', function(){
+    var c1 = client_details('test'),
+        c2 = client_details('sp-demo'),
+        u1 = null,
+        u2 = null;
+
+    function setup_for_revoke(uN, cN, username){
+        function get_token(then){
+            return function(){
+                make_user().a.post(host + '/token')
+                             .auth(cN.name, 'hunter2')
+                             .send({
+                                grant_type: 'authorization_code',
+                                code: uN.code,
+                                redirect_uri: cN.uri
+                             })
+                             .end(validate.token(uN, then, true, cN.scope));
+            };
+        }
+        function test_access(then){
+            return function(){
+                make_user().a.get(host + '/api/profile')
+                             .set('Authorization', 'Bearer ' + uN.token)
+                             .end(validate.api_access(uN, then));
+            };
+        }
+        return function(done){
+            grant_initial_code(uN, username, cN)(get_token(test_access(done)));
+        };
+    }
+
+    describe('setup', function(){
+        u1 = make_user();
+        it('should get a token for c1', setup_for_revoke(u1, c1, 'alice@example.com.x'));
+        u2 = make_user();
+        it('should get a token for c2', setup_for_revoke(u2, c2, 'alice@example.com.x'));
+    });
+    describe('/review', function(){
+        it('should show page', function(done){
+            u1.a.get(host + '/review?client_id=' + c1.name + '&redirect_uri=' + c1.uri)
+                .end(validate.showing_review_page(done));
         });
     });
 });
