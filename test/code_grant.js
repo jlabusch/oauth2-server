@@ -664,6 +664,10 @@ describe('revoke access', function(){
             u1.a.get(host + '/review?client_id=' + c1.name + '&redirect_uri=' + c1.uri)
                 .end(validate.showing_review_page(done));
         });
+        it('should list existing tokens');
+        it('should allow access+refresh pair to be revoked');
+        it('should require valid client credentials');
+        it('should require valid transaction ID');
     });
 });
 
