@@ -14,7 +14,7 @@ exports.run = function(){
     });
 
     var CPUS = require('os').cpus().length,
-        WORKERS_PER_CPU = 1;
+        WORKERS_PER_CPU = CPUS > 1 ? 1 : 2;
 
     config.on('need_reload', function(){
         for (var id in cluster.workers){

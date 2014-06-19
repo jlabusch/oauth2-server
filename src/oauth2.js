@@ -342,53 +342,87 @@ exports.authorization_review = [
             if (err){
                 return next(new Error("Unauthorized Client"));
             }
-            // TODO: Also look at access tokens, not just refresh tokens.
-            //       (Implicit Grants may never allocate refresh tokens.)
-            // TODO: Could really use a custom error page.
-            db.refreshTokens.find_by_user(req.user.id, null, function(err, tokens){
+            // We have to look at both access tokens and refresh tokens because
+            // implicit grants only allocate access tokens.
+            db.accessTokens.find_by_user(req.user.id, null, function(err, atoks){
                 if (err){
-                    log('error', 'Can\'t find existing tokens for user ' + req.user.id);
+                    log('error', 'Can\'t get access tokens for user ' + req.user.id);
                     return next(new Error("Internal error while searching for token grants"));
                 }
-                function render(details){
-                    req.session['review'] = req.session['review'] || {};
-                    if (Array.isArray(details) == false){
-                        details = [details];
+                atoks = atoks || [];
+                db.refreshTokens.find_by_user(req.user.id, null, function(err, rtoks){
+                    if (err){
+                        log('error', 'Can\'t get refresh tokens for user ' + req.user.id);
+                        return next(new Error("Internal error while searching for token grants"));
                     }
-                    details = details.map(function(d){
-                        d.clientName = db.clients.name(d.clientID);
-                        return d;
-                    });
-                    var tid = utils.uid(16);
-                    req.session['review'][tid] = {
-                        client: client.id,
-                        redirectURI: redirectURI,
-                        transactionID: tid,
-                        grants: details
-                    };
-                    var v = config.get('auth_server').views.review;
-                    log('info', 'rendering ' + v + ' for TID ' + shorten(tid));
-                    res.render(
-                        v,
-                        {
+                    rtoks = rtoks || [];
+                    function render(err, details){
+                        // TODO: Could really use a custom error page.
+                        req.session['review'] = req.session['review'] || {};
+                        details = details.map(function(d){
+                            d.clientName = db.clients.name(d.clientID);
+                            return d;
+                        });
+                        var tid = utils.uid(16);
+                        req.session['review'][tid] = {
+                            client: client.id,
+                            redirectURI: redirectURI,
                             transactionID: tid,
-                            user: req.user,
-                            client: {id: client.id, clientName: client.name},
                             grants: details
+                        };
+                        var v = config.get('auth_server').views.review;
+                        log('info', 'rendering ' + v + ' for TID ' + shorten(tid));
+                        res.render(
+                            v,
+                            {
+                                transactionID: tid,
+                                user: req.user,
+                                client: {id: client.id, clientName: client.name},
+                                grants: details
+                            }
+                        );
+                    }
+                    function load_tokens(type, list, next){
+                        if (list && list.length){
+                            db[type].find(list, function(err, details){
+                                if (err){
+                                    log('error', "Can't get refresh tokens for user " + req.user.id);
+                                    return next(new Error("Internal error while searching for token grants"));
+                                }
+                                next(null, details);
+                            });
+                        }else{
+                            next(null, []);
                         }
-                    );
-                }
-                if (tokens && tokens.length){
-                    db.refreshTokens.find(tokens, function(err, details){
+                    }
+                    function force_array(a){
+                        return Array.isArray(a) ? a : [a];
+                    }
+                    load_tokens('accessTokens', atoks, function(err, atok_details){
                         if (err){
-                            log('error', 'Can\'t find token details for user ' + req.user.id);
-                            return next(new Error("Internal error while searching for token grants"));
+                            return next(err);
                         }
-                        render(details);
+                        load_tokens('refreshTokens', rtoks, function(err, rtok_details){
+                            if (err){
+                                return next(err);
+                            }
+                            atok_details = force_array(atok_details);
+                            rtok_details = force_array(rtok_details);
+                            var tokens = atok_details
+                                            .concat(rtok_details)
+                                            .filter(function(x, pos, xs){
+                                                var dup = false;
+                                                // this is shitty time complexity but the
+                                                // lists will always be small.
+                                                for (var i = pos+1; i < xs.length; ++i){
+                                                    dup = dup || x.clientID === xs[i].clientID;
+                                                }
+                                                return !dup;
+                                            });
+                            render(null, tokens);
+                        });
                     });
-                }else{
-                    render([]);
-                }
+                });
             });
         });
     }
