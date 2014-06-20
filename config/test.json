@@ -2,6 +2,16 @@
     "client_credentials": {
         "file": "./clients.json.example"
     },
+    "storage": {
+        "audit": {
+            "type": "Redis",
+            "db": 4,
+            "host": "127.0.0.1",
+            "port": 6379,
+            "ttl": 0,
+            "options": {}
+        }
+    },
     "resource_server": {
         "type": "dummy",
         "host": "127.0.0.1",

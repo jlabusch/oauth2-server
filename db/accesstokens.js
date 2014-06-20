@@ -1,6 +1,7 @@
 var storage = require('../lib/store'),
     store = null,
     clients = require('../db/clients'),
+    audit = require('../db/audit'),
     prepender = require('../lib/utils').prepender,
     log = require('../lib/logging').log;
 
@@ -31,10 +32,13 @@ exports.find_by_user = function(userID, clientID, done){
 };
 
 exports.save = function(token, userID, clientID, scope, done){
-    store.put(token, {userID: userID, clientID: clientID, scope: scope}, function(err){
+    var details = {userID: userID, clientID: clientID, scope: scope};
+    store.put(token, details, function(err){
         if (err){
             return done(err);
         }
+        details.token = token;
+        audit.record('access_token_grant', userID, clientID, details);
         store.put('u:' + userID + ':c:' + clientID, token, done);
     });
 };
@@ -48,6 +52,7 @@ exports.revoke = function(userID, clientID, done){
         if (!token){
             return done();
         }
+        audit.record('access_token_revoke', userID, clientID, {token: token});
         store.del(reverse_lookup, function(err){
             if (err){
                 // don't care...

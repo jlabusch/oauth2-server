@@ -25,6 +25,15 @@
             "ttl": 0,
             "options": {}
         },
+        "audit": {
+            "type": "Postgres",
+            "user": "vagrant",
+            "password": "vagrant",
+            "database": "vagrant",
+            "host": "127.0.0.1",
+            "port": "5432",
+            "ssl": true
+        },
         "codes": {
             "type": "Redis",
             "db": 1,

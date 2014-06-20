@@ -32,7 +32,8 @@
     "connect-ensure-login": "0.1.x",
     "node-syslog": ">= 1.1.7",
     "hiredis": ">= 0.1.16",
-    "redis": "0.10.x"
+    "redis": "0.10.x",
+    "pg": "3.3.x"
   },
   "devDependencies": {
     "should": "3.3.x",
