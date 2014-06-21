@@ -8,5 +8,5 @@ storage.create('audit', function(err, obj){
 });
 
 exports.record = function(type, userID, clientID, data, done){
-    store.put(userID + ':' + clientID + ':' + type, data, done);
+    store.append(userID + ':' + clientID + ':' + type, data, done);
 };

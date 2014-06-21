@@ -10,4 +10,3 @@ function stopf(){
 
 stopf ./src/server.js
 stopf ./dummy-servers/resource-server.js
-stopf ./dummy-servers/MemStore-server.js

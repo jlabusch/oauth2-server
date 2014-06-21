@@ -30,7 +30,6 @@ function startf(){
     node $APP
 }
 
-startf ./dummy-servers/MemStore-server.js # this is a no-op unless "MemStore" is a configured storage type.
 startf ./dummy-servers/resource-server.js # this is a no-op unless resource_server.type is "dummy"
 startf ./src/server.js
 exit 0
