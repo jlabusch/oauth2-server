@@ -4,12 +4,7 @@
     },
     "storage": {
         "audit": {
-            "type": "Redis",
-            "db": 4,
-            "host": "127.0.0.1",
-            "port": 6379,
-            "ttl": 0,
-            "options": {}
+            "type": "Blackhole"
         }
     },
     "resource_server": {
