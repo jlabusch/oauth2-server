@@ -1,4 +1,7 @@
 {
+    "auth_server": {
+        "num_workers": 3
+    },
     "client_credentials": {
         "file": "./clients.json.example"
     },

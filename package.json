@@ -46,7 +46,7 @@
   "scripts": {
     "prepublish": "./node_modules/bower/bin/bower install",
     "start":    "./start.sh",
-    "pretest":  "./start.sh test; sleep 2",
+    "pretest":  "./start.sh test; sleep 5",
     "test":     "./node_modules/mocha/bin/mocha -R spec",
     "posttest": "./stop.sh",
     "stop":     "./stop.sh"

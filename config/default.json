@@ -6,6 +6,7 @@
         "ssl_cert": null,
         "ssl_key": null,
         "session_secret": "$4$eRDyE/eQ$/F/mHVBpobUbTB7VcaFQ5GfaCNg$",
+        "num_workers": "auto",
         "views": {
             "layout": "layout",
             "login": "login",
@@ -27,12 +28,14 @@
         },
         "audit": {
             "type": "Postgres",
-            "user": "vagrant",
-            "password": "vagrant",
-            "database": "vagrant",
-            "host": "127.0.0.1",
-            "port": "5432",
-            "ssl": true
+            "options": {
+                "user": "vagrant",
+                "password": "vagrant",
+                "database": "vagrant",
+                "host": "127.0.0.1",
+                "port": "5432",
+                "ssl": true
+            }
         },
         "codes": {
             "type": "Redis",
