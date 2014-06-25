@@ -15,7 +15,7 @@ function index_key(u, c){
 }
 
 exports.expires_in = function(){
-    return store.__config.ttl;
+    return store.__config.ttl || 60*60*2;
 };
 
 exports.find = function(token, done){
