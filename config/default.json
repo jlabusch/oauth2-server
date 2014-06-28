@@ -29,9 +29,9 @@
         "audit": {
             "type": "Postgres",
             "options": {
-                "user": "vagrant",
-                "password": "vagrant",
-                "database": "vagrant",
+                "user": "postgres",
+                "password": "",
+                "database": "oauth2",
                 "host": "127.0.0.1",
                 "port": "5432",
                 "ssl": true

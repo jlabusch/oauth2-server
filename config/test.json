@@ -8,6 +8,24 @@
     "storage": {
         "audit": {
             "type": "Blackhole"
+        },
+        "test_postgres": {
+            "type": "Postgres",
+            "options": {
+                "user": "postgres",
+                "database": "oauth2",
+                "host": "127.0.0.1",
+                "port": "5432",
+                "ssl": true
+            }
+        },
+        "test_redis": {
+            "type": "Redis",
+            "db": 0,
+            "host": "127.0.0.1",
+            "port": 6379,
+            "ttl": 60,
+            "options": {}
         }
     },
     "resource_server": {
