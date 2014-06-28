@@ -147,12 +147,86 @@ describe('Storage', function(){
                 });
             });
         });
-        it('should support get(key)');
-        it('should support get([keys])');
-        it('should support get([keys])');
-        it('should support concurrent get()');
-        it('should support del(key)');
-        it('should support concurrent del()');
+        it('should support get(key)', function(done){
+            pg_store.get('simple put', function(err, result){
+                should.not.exist(err);
+                ('hello world' === result).should.be.true;
+                pg_store.get("I don't exist", function(err, result){
+                    should.not.exist(err);
+                    (result === null).should.be.true;
+                    done();
+                });
+            });
+        });
+        it('should support get([keys])', function(done){
+            pg_store.get(['simple put', 'concurrent put'], function(err, result){
+                should.not.exist(err);
+                result.length.should.equal(2);
+                ('hello world' === result[0] || 'goodbye world' === result[0]).should.be.true;
+                ('hello world' === result[1] || 'goodbye world' === result[1]).should.be.true;
+                pg_store.get(["I don't exist", "either"], function(err, result){
+                    should.not.exist(err);
+                    (result === null).should.be.true;
+                    done();
+                });
+            });
+        });
+        it('should support concurrent get()', function(done){
+            var done_1 = false,
+                done_2 = false;
+            pg_store.get('simple put', function(err, result){
+                should.not.exist(err);
+                ('hello world' === result).should.be.true;
+                done_1 = true;
+                if (done_1 && done_2){
+                    done();
+                }
+            });
+            pg_store.get('concurrent put', function(err, result){
+                should.not.exist(err);
+                ('hello world' === result || 'goodbye world' === result).should.be.true;
+                done_2 = true;
+                if (done_1 && done_2){
+                    done();
+                }
+            });
+        });
+        it('should support del(key)', function(done){
+            pg_store.del('simple put', function(err){
+                should.not.exist(err);
+                pg_store.get('simple put', function(err, result){
+                    should.not.exist(err);
+                    (result === null).should.be.true;
+                    done();
+                });
+            });
+        });
+        it('should support concurrent del()', function(done){
+            var done_1 = false,
+                done_2 = false;
+            pg_store.del('append 1', function(err){
+                should.not.exist(err);
+                pg_store.get('append 1', function(err, result){
+                    should.not.exist(err);
+                    (result === null).should.be.true;
+                    done_1 = true;
+                    if (done_1 && done_2){
+                        done();
+                    }
+                });
+            });
+            pg_store.del('append 2', function(err){
+                should.not.exist(err);
+                pg_store.get('append 2', function(err, result){
+                    should.not.exist(err);
+                    (result === null).should.be.true;
+                    done_2 = true;
+                    if (done_1 && done_2){
+                        done();
+                    }
+                });
+            });
+        });
     });
 });
 
