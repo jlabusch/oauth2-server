@@ -335,7 +335,6 @@ describe('Storage', function(){
                 should.not.exist(err);
                 redis_store.get('pqr', function(err, result){
                     should.not.exist(err);
-                    console.log(JSON.stringify(result));
                     (result === null).should.be.true;
                     done();
                 });
