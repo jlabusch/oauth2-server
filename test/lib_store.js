@@ -22,7 +22,8 @@ function introduce_lag(obj){
 }
 
 describe('Storage', function(){
-    var pg_table = 'test_postgres';
+    var pg_table = 'test_postgres',
+        redis_table = 'test_redis';
     describe('setup', function(){
         it('should clean out ' + pg_table, function(done){
             this.timeout(5000);
@@ -35,6 +36,10 @@ describe('Storage', function(){
                         done();
                     });
                 }, 500);
+            });
+            storage.create(redis_table, function(err, store){
+                should.not.exist(err);
+                store.__client.flushall();
             });
         });
     });
@@ -166,7 +171,7 @@ describe('Storage', function(){
                 ('hello world' === result[1] || 'goodbye world' === result[1]).should.be.true;
                 pg_store.get(["I don't exist", "either"], function(err, result){
                     should.not.exist(err);
-                    (result === null).should.be.true;
+                    (result && Array.isArray(result) && result.length === 0).should.be.true;
                     done();
                 });
             });
@@ -227,6 +232,116 @@ describe('Storage', function(){
                 });
             });
         });
+    });
+    describe('Redis', function(){
+        var redis_store = null;
+        it('should create a store', function(done){
+            this.timeout(5000);
+            redis_store = storage.create(redis_table, function(err, store){
+                should.not.exist(err);
+                should.exist(store);
+                store.__table.should.equal(redis_table);
+                redis_store = store;
+                introduce_lag(redis_store);
+                done();
+            });
+        });
+        it('should support put(key, value)', function(done){
+            redis_store.put('abc', 'def', function(err){
+                should.not.exist(err);
+                redis_store.get('abc', function(err, result){
+                    should.not.exist(err);
+                    (result === 'def').should.be.true;
+                    done();
+                });
+            });
+        });
+        it('should support concurrent put()', function(done){
+            var done_1 = false,
+                done_2 = false;
+            redis_store.put('pqr', '123', function(err){
+                should.not.exist(err);
+                redis_store.get('pqr', function(err, result){
+                    should.not.exist(err);
+                    (result === '123' || result === '456').should.be.true;
+                    done_1 = true;
+                    if (done_1 && done_2){
+                        done();
+                    }
+                });
+            });
+            redis_store.put('pqr', '456', function(err){
+                should.not.exist(err);
+                redis_store.get('pqr', function(err, result){
+                    should.not.exist(err);
+                    (result === '123' || result === '456').should.be.true;
+                    done_2 = true;
+                    if (done_1 && done_2){
+                        done();
+                    }
+                });
+            });
+        });
+        it('should support append(key, value)');
+        it('should support concurrent append()');
+        it('should be adding rows for append()');
+        it('should support get(key)', function(done){
+            redis_store.get('abc', function(err, result){
+                should.not.exist(err);
+                (result === 'def').should.be.true;
+                redis_store.get("I don't exist", function(err, result){
+                    should.not.exist(err);
+                    (result === null).should.be.true;
+                    done();
+                });
+            });
+        });
+        it('should support get([keys])', function(done){
+            redis_store.get(['abc', 'pqr'], function(err, result){
+                should.not.exist(err);
+                should.exist(result);
+                result.length.should.equal(2);
+                (result[0] === 'def').should.be.true;
+                (result[1] === '123' || result[1] === '456').should.be.true;
+                redis_store.get(["I don't exist", "either"], function(err, result){
+                    should.not.exist(err);
+                    (result && Array.isArray(result) && result.length === 0).should.be.true;
+                    done();
+                });
+            });
+        });
+        it('should support concurrent get()', function(done){
+            var done_1 = false,
+                done_2 = false;
+            redis_store.get('abc', function(err, result){
+                should.not.exist(err);
+                (result === 'def').should.be.true;
+                done_1 = true;
+                if (done_1 && done_2){
+                    done();
+                }
+            });
+            redis_store.get('pqr', function(err, result){
+                should.not.exist(err);
+                (result === '123' || result === '456').should.be.true;
+                done_2 = true;
+                if (done_1 && done_2){
+                    done();
+                }
+            });
+        });
+        it('should support del(key)', function(done){
+            redis_store.del('pqr', function(err){
+                should.not.exist(err);
+                redis_store.get('pqr', function(err, result){
+                    should.not.exist(err);
+                    console.log(JSON.stringify(result));
+                    (result === null).should.be.true;
+                    done();
+                });
+            });
+        });
+        it('should support concurrent del()');
     });
 });
 
