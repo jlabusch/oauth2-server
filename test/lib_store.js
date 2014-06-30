@@ -37,9 +37,12 @@ describe('Storage', function(){
                     });
                 }, 500);
             });
+        });
+        it('should clean out ' + redis_table, function(done){
             storage.create(redis_table, function(err, store){
                 should.not.exist(err);
                 store.__client.flushall();
+                done();
             });
         });
     });
