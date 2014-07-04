@@ -16,6 +16,7 @@
 
     <!-- Fonts -->
     <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
 
     <!-- IE8 support for HTML5 elements and media queries -->
@@ -48,10 +49,6 @@
                     <li class="hidden">
                         <a href="#page-top"></a>
                     </li>
-                    <li class="page-scroll"><a href="#">About</a></li>
-                    <li class="page-scroll"><a href="/oauth2-server/auth_server.html">Auth Server</a></li>
-                    <li class="page-scroll"><a href="/oauth2-server/res_server.html">Resource Server</a></li>
-                    <li class="page-scroll"><a href="/oauth2-server/clients.html">Client Patterns</a></li>
                 </ul>
             </div>
             <!-- /.navbar-collapse -->
@@ -74,16 +71,48 @@
         </div>
     </header>
 
-    <section class="t_secondary" id="s-about">
+    <section class="t_secondary" id="s-contents">
         <div class="container">
             <div class="row">
-                <div class="col-lg-12 text-center">
-                    <h2>About</h2>
-                    <hr class="star-secondary">
+                <div class="col-lg-8 col-lg-offset-2 text-left">
+                    <h3>0. Contents</h3>
+                    <span class="words">
+                        <ol>
+                            <li><a href="#s-about">About</a></li>
+                            <li><a href="#s-abstract">Protocol</a></li>
+                            <li><a href="#s-starting">Getting Started</a></li>
+                            <li><a href="#s-components">Components</a></li>
+                            <li><a href="#s-auth-server">Auth Server</a>
+                                <ol>
+                                    <li><a href="#s-auth-server-config">Config</a></li>
+                                </ol>
+                            </li>
+                            <li><a href="#s-resource-server">Resource Server</a>
+                                <ol>
+                                    <li><a href="#s-resource-server-config">Config</a></li>
+                                </ol>
+                            </li>
+                            <li><a href="#s-storage">Storage</a>
+                                <ol>
+                                    <li><a href="#s-storage-abstraction">Abstraction</a></li>
+                                    <li><a href="#s-storage-general">General Config</a></li>
+                                    <li><a href="#s-storage-client">Client Config</a></li>
+                                </ol>
+                            </li>
+                            <li><a href="#s-config">Config System</a></li>
+                            <li><a href="#s-client-code-grant">Pattern: Auth Code Grant</a>
+                                <ol>
+                                    <li><a href="#s-client-code-grant-token">Obtaining Authorization</a></li>
+                                    <li><a href="#s-client-code-grant-refresh">Using Refresh Tokens</a></li>
+                                </ol>
+                            </li>
+                        </ol>
+                    </span>
                 </div>
             </div>
-            <div class="row">
+            <div class="row" id="s-about">
                 <div class="col-lg-8 col-lg-offset-2 text-left">
+                    <h3>1. About</h3>
                     <p>This OAuth 2.0 server is based on <a href="https://github.com/jaredhanson">Jared Hanson's</a>
                     <a href="http://passportjs.org/">Passport</a> and <a href="https://github.com/jaredhanson/oauth2orize">Oauth2orize</a>
                     modules. Its focus is to provide existing websites with a straight forward way to
@@ -91,27 +120,19 @@
                     easily and with a moderate level of security.</p>
                     <p>As a provider, the existing website is given control over not only the whitelist
                     of valid partner sites but also the OAuth patterns each partner is allowed to use (i.e.
-                    <a href="http://tools.ietf.org/html/rfc6749#section-4.1">Authorization Code Grant</a> and/or 
+                    <a href="http://tools.ietf.org/html/rfc6749#section-4.1">Authorization Code Grant</a> vs. 
                     <a href="http://tools.ietf.org/html/rfc6749#section-4.2">Implicit Grant</a>.)</p>
                     <p>In OAuth terms, the existing website fills the Authorization Server and Resource
                     Server roles and the partner sites take the Client role. This software provides the
                     Authorization Server functionality and is generally able to integrate without any
                     mandatory software changes to the Resource Server.</p>
-                    <p>Reference documentation is provided for the Client integration code.</p>
+                    <p>Reference documentation is provided for Client integration.</p>
                     <p>This project's <a href="https://github.com/jlabusch/oauth2-server">source code</a> is freely available under the GNU General Public License.</p>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <section class="t_primary" id="s-primer">
-        <div class="container">
-            <div class="row text-center">
-                <h2>OAuth 2.0 Primer</h2>
-                <hr class="star-primary">
-            </div>
-            <div class="row">
+            <div class="row" id="s-abstract">
                 <div class="col-lg-8 col-lg-offset-2">
+                <h3>2. Abstract Protocol Flow</h3>
                 <p>RFC 6749 defines the abstract protocol flow as:</p>
                 <img class="img-responsive" src="img/diag_rfc_abstract_flow.png" alt="OAuth2.0 - Abstract Protocol Flow">
                 <p>The participants are:</p>
@@ -136,6 +157,599 @@
                         Resource Owner credentials.
                     </ol>
                 </span>
+                </div>
+            </div>
+            <div class="row" id="s-starting">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h3>3. Getting Started</h3>
+                    <span class="words">Get Node</span>
+                    <pre> > sudo add-apt-repository ppa:chris-lea/node.js
+ > sudo apt-get update
+ > sudo apt-get install nodejs</pre>
+                    <span class="words">Get the source</span>
+                    <pre> > git clone https://github.com/jlabusch/oauth2-server.git
+ > cd oauth2-server</pre>
+                    <span class="words">Make</span>
+                    <pre> > npm install</pre>
+                    <span class="words">Run</span>
+                    <pre> > npm test</pre>
+                    <p>See also <code>npm [stop|start|restart]</code>.</p>
+                </div>
+            </div>
+            <div class="row" id="s-components">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h3>4. Components</h3>
+                    <p>In its role as Authorization Server, this application acts as
+                    a broker for the interactions between the other participants. It
+                    maintains a registry of accepted Client sites, authenticates users against
+                    the Resource Server and manages the authorization granted by those users for
+                    Client access to their data.</p>
+                    <img class="img-responsive" src="img/diag_components.png" alt="Server components">
+                </div>
+            </div>
+            <div class="row" id="s-auth-server">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h3>5.0. Auth Server</h3>
+                    <p>The heart of the application is the <a href="http://expressjs.com/">Express</a> /
+                    <a href="http://passportjs.org/">Passport</a> /
+                    <a href="https://github.com/jaredhanson/oauth2orize">Oauth2orize</a> stack that
+                    defines the framework in which the OAuth interactions take place.</p>
+                    <p>The basic interactions are:</p>
+                    <span class="words">
+                        <h4>GET /login</h4>
+                        Prompts the Resource Owner for his credentials using an EJS template configured
+                        in <code>auth_server.views.login</code>
+                        <h4>POST /login</h4>
+                        Authenticates the Resource Owner against the Resource Server using a
+                        custom function that you'll need to define.
+                        <h4>GET /authorize</h4>
+                        Prompts the user for authorization to share their protected resources with
+                        the Client site. Uses the <code>auth_server.views.dialog</code> EJS template
+                        <h4>POST /authorize</h4>
+                        Handles the result of the user's decision. Depending on the OAuth pattern chosen
+                        by the Client, this can result in an access token or an authorization code
+                        (which the Client then redeems for an access token.)
+                        <h4>POST /token</h4>
+                        Exchanges an authorization code (or a refresh token) for an access token.
+                        <h4>GET /review</h4>
+                        Allows the user to review existing access token/refresh token grants and
+                        revoke any that should no longer apply.
+                        Uses the <code>auth_server.views.review</code> EJS template
+                        <h4>POST /review</h4>
+                        Revokes tokens as directed by the user.
+                        <h4>GET /api/*</h4>
+                        Services allowing access to protected resources based on access tokens.
+                        All <code>/api/</code> services will be highly specific to your
+                        Resource Server.
+                    </span>
+                    <h3 id="s-auth-server-config">5.1 Auth Server Config</h3>
+                    <pre>"auth_server": {
+  "url": "http://127.0.0.1:8081",
+  "port": 8081,
+  "ssl": false,
+  "ssl_cert": null,
+  "ssl_key": null,
+  "session_secret": "REPLACE ME",
+  "num_workers": "auto",
+  "views": {
+    "layout": "layout",
+    "login": "login",
+    "dialog": "dialog",
+    "review": "review"
+  }
+}</pre>
+                    <p>The Authentication Server portion controls the operation of the core Express webserver.</p>
+                    <span class="words">
+                        <ul>
+                            <li><code>url</code>: Used for user agent redirection between endpoints, e.g. from
+                                <code>/authorize</code> to <code>/login</code>, and by automated tests. If the
+                                Auth Server is deployed behind a reverse proxy, this should be the external,
+                                public-facing URL</li>
+                            <li><code>port</code>: Express webserver listen port</li>
+                            <li><code>ssl</code>: Flag to toggle between HTTP and HTTPS</li>
+                            <li><code>ssl_cert</code>: SSL certificate to use (implies <code>ssl = true</code>)</li>
+                            <li><code>ssl_key</code>: SSL key file to use (implies <code>ssl = true</code>)</li>
+                            <li><code>session_secret</code>: Value used to sign session cookies</li>
+                            <li><code>num_workers</code>: Number of worker processes to spawn (<code>auto</code> means one per "CPU")</li>
+                        </ul>
+                        <p>For the EJS template files, any name <code>$X</code> is translated to the
+                        file <code>./views/$X.ejs</code>.</p>
+                        <ul>
+                            <li><code>views.layout</code>: Page foundation</li>
+                            <li><code>views.login</code>: Body of authentication page</li>
+                            <li><code>views.dialog</code>: Body of authorization page</li>
+                            <li><code>views.review</code>: Body of review page</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+            <div class="row" id="s-resource-server">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h3>6.0 Resource Server</h3>
+                    <p>The easiest way to integrate with an existing website is to provide an integration
+                    layer that proxies OAuth requests to existing resource server APIs. For example, suppose
+                    your existing site supports</p>
+                    <span class="words">
+                        <ul>
+                            <li>POST <code>/login</code>, used by your login form</li>
+                            <li>GET <code>/user/info</code>, used by your client-side AJAX calls to get
+                            user profile information</li>
+                            <li>POST <code>/user/avatar</code>, which your user settings page can hit
+                            to update a user's profile picture.</li>
+                        </ul>
+                    </span>
+                    <p>In <code>./lib/resource_server.js</code>, you might define:</p>
+                    <pre>exports.MyResourceServerInterface = {
+  login: function(username, password, next){ /* proxy to yoursite/login */ },
+  api: {
+    scopes: ['read-only', 'read-write'],
+    update_avatar: {
+      scope: 'read-write',
+      fn: function(req, res){ /* proxy to yoursite/user/avatar */ }
+    },
+    profile: {
+      scope: 'read-only',
+      fn: function(req, res){ /* proxy to yoursite/user/info */ }
+    }
+  }
+}</pre>
+                    <p>The <code>login()</code> function should invoke <code>next</code> in the following ways:</p>
+                    <span class="words">
+                        <ul>
+                            <li>Login success: <code>next(null, {id: <em>UID</em>, site_token: <em>T</em>, ...})</code></li>
+                            <li>Login failure: <code>next(null, false, {message: '...'})</code></li>
+                            <li>Internal error: <code>next(err)</code></li>
+                        </ul>
+                    </span>
+                    <p>The <code>api</code> functions should use the <code>site_token</code> above (available
+                    as <code>req.authInfo.site_token</code>) to access the protected resources. The site token
+                    is typically the same kind of long-lived cookie or "remember me" token used by existing AJAX
+                    etc. services on your site.</p>
+                    <p>API responses should be written using the HTTP/S response argument <code>res</code>,
+                    e.g. using <code>res.json(...)</code>.
+                    <h3 id="s-resource-server-config">6.1 Resource Server Config</h3>
+                    <pre>"resource_server": {
+  "type": "dummy",
+  "host": "127.0.0.1",
+  "port": 8084,
+  "basic_auth": "user:pass",
+  "user_agent": "OAuth-IdP"
+}</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>type</code>: The name of an object exported from
+                            <code>./lib/resource_server.js</code></li>
+                        </ul>
+                    </span>
+                    <p>Additional options can be defined for your own implementation of the
+                    Resource Server interface.</p>
+                    <p>See also the stub server in
+                    <code>./dummy-servers/resource_server.js</code>, which is started automatically
+                    via <code>npm start</code> when the configured type is <code>dummy</code>.</p>
+                    <p>For a real world interface example, see the <code>stuff_nation</code> type
+                    in <code>./lib/resource_server.js</code>, which is compatible with Stuff.co.nz.</p>
+                </div>
+            </div>
+            <div class="row" id="s-storage">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h3>7.0 Storage</h3>
+                    <p>The application stores a few different kinds of state:</p>
+                    <span class="words">
+                        <ul>
+                            <li>User sessions</li>
+                            <li>Authorization codes</li>
+                            <li>Access tokens</li>
+                            <li>Refresh tokens</li>
+                            <li>Client site metadata (JSON file; see <code>./clients.json.example</code>)</li>
+                            <li>User metadata (not exposed to Client sites)</li>
+                            <li>Audit logs</li>
+                        </ul>
+                    </span>
+                    <p>This is an area you're very likely to want to customize based on
+                    your existing ecosystem and deployment environment. Two storage examples
+                    are included: <code>Postgres</code>, an interface to <a href="http://www.postgresql.org/">PostgreSQL</a>,
+                    and <code>Redis</code>, an interface to <a href="http://redis.io/">redis-server</a>.</p>
+                    <p>As a starting point, you may want to consider putting anything that should expire in
+                    Redis and everything permanent, like audit logs, in Postgres.</p>
+                    <h3 id="s-storage-abstraction">7.1 Abstraction</h3>
+                    <p>As per the component diagram, it's useful to think about storage on three levels:</p>
+                    <span class="words">
+                        <ul>
+                            <li>DB abstraction: <code>./db/*.js</code> provides functions for accessing specific
+                            kinds of data in an implementation agnostic way</li>
+                            <li>Storage interface: <code>./lib/store.js</code> provides interfaces to "real"
+                            databases, e.g. redis-server. It's relatively easy to add support for additional
+                            storage types, and to switch between them by changing config on a per-table basis
+                            (i.e. <code>users</code> and <code>tokens</code> can have different kinds of storage.)</li>
+                            <li>Actual storage: Likely to vary between projects based on your specific situation
+                            and requirements.</li>
+                        </ul>
+                    </span>
+                    <h3 id="s-storage-general">7.2 General Storage Config</h3>
+                    <p>General storage can be configured independently for the following logical groups:</p>
+                    <span class="words">
+                        <ul>
+                            <li><code>session</code>: User sessions</li>
+                            <li><code>codes</code>: Authorization codes</li>
+                            <li><code>tokens</code>: Access tokens</li>
+                            <li><code>refresh_tokens</code>: Refresh tokens</li>
+                            <li><code>users</code>: User metadata</li>
+                            <li><code>audit</code>: Token grant audit records</li>
+                        </ul>
+                    </span>
+                    <p>One final type, <code>default</code>, provides a catchall.</p>
+                    <h4>Postgres Config</h4>
+                    <pre>"storage": {
+  "audit": {
+    "type": "Postgres",
+    "options": {
+      "user": "postgres",
+      "password": "",
+      "database": "oauth2",
+      "host": "127.0.0.1",
+      "port": "5432",
+      "ssl": true
+    }
+  },
+}</pre>
+                    <p>Postgres storage depends on the <code>postgresql</code> database package (tested with 9.3.)
+                    and the Node <code>pg</code> module.</p>
+                    <span class="words">
+                        <ul>
+                            <li><code>type</code>: "Postgres" corresponds to the name of an object exported from
+                            <code>./lib/store.js</code></li>
+                            <li><code>options.user</code>: Postgres username</li>
+                            <li><code>options.password</code>: Postgres user password</li>
+                            <li><code>options.database</code>: Database name</li>
+                            <li><code>options.host</code>: Postgres server hostname</li>
+                            <li><code>options.port</code>: Postgres server port</li>
+                            <li><code>options.ssl</code>: Whether to connect via SSL</li>
+                        </ul>
+                    </span>
+                    <h4>Redis Config</h4>
+                    <pre>"storage": {
+  "default": {
+    "type": "Redis",
+    "db": 0,
+    "host": "127.0.0.1",
+    "port": 6379,
+    "ttl": 900,
+    "options": {}
+  }
+}</pre>
+                    <p>Redis storage depends on the <code>redis-server</code> package (tested with 2.6.)
+                    and the Node <code>redis</code> and <code>hiredis</code> modules.</p>
+                    <span class="words">
+                        <ul>
+                            <li><code>type</code>: "Redis" corresponds to the name of an object exported from
+                            <code>./lib/store.js</code></li>
+                            <li><code>db</code>: Specific database instance</li>
+                            <li><code>host</code>: Redis server hostname</li>
+                            <li><code>port</code>: Redis server port</li>
+                            <li><code>ttl</code>: Expiry time of records (SETEX), or 0 for no expiry (SET)</li>
+                            <li><code>options</code>: Additional options to be passed to <code>redis.createClient</code></li>
+                        </ul>
+                    </span>
+                    <h3 id="s-storage-client">7.3 Client Config</h3>
+                    <p>The list of accepted clients is stored in a JSON file on disk.</p>
+                    <pre>"client_credentials": {
+  "file": "./clients.json"
+}</pre>
+                    <p>Entries in the file define client credentials, redirect URIs and allowed
+                    grant types.</p>
+                    <pre>{
+  "id": "2",
+  "name": "Automated tests",
+  "client_id": "test",
+  "client_secret": "2aa0c27d4a452d6bbb87e1b175f8e67ce75c000f",
+  "client_salt": "$4$3SByu9lP$nEyg3Ezxj+5BDsi8uAdwtTeU4Is$",
+  "allow_code_grant": true,
+  "allow_implicit_grant": true,
+  "valid_redirects": [
+    "http://localhost:8080/"
+  ]
+}</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>id</code>: Unique internal client ID, which should never change</li>
+                            <li><code>name</code>: Name suitable for display to user during authorization step</li>
+                            <li><code>client_id</code>: Client ID as shared with the client site</li>
+                            <li><code>client_secret</code>: SHA-1 hash of <code>client_id:&lt;secret&gt;:client_salt</code>.
+                            We never store the clear text client secret</li>
+                            <li><code>client_salt</code>: Any random-ish string</li>
+                            <li><code>allow_code_grant</code>: <code>true</code> if Authorization Code Grants are allowed for this client</li>
+                            <li><code>allow_implicit_grant</code>: <code>true</code> if Implicit Grants are allowed for this client</li>
+                            <li><code>valid_redirects</code>: A list of the valid redirect URIs for a client. Locking
+                            clients down by redirect URI is a vital layer of protection against abuse.</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+            <div class="row" id="s-config">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h3>8.0 Config System</h3>
+                    <p>The application's configuration system was designed with a couple of goals in mind:</p>
+                    <span class="words">
+                        <ul>
+                            <li>It should support runtime reloading for at least some options (e.g. log levels)</li>
+                            <li>It should be easy to override options based on your environment (e.g. dev/test/prod)</li>
+                        </ul>
+                    </span>
+                    <h4>Environment Variables</h4>
+                    <pre>export NODE_CONFIG_DIR=${NODE_CONFIG_DIR:=config}</pre>
+                    <p>Use <code>NODE_CONFIG_DIR</code> to change where the application looks for
+                    its configuration files. For production use this should probably be somewhere in
+                    <code>/etc/</code>.</p>
+                    <pre>export NODE_ENV=${NODE_ENV:=development}</pre>
+                    <p>Use <code>NODE_ENV</code> to load configuration overrides for particular hosts
+                    or platforms.</p>
+                    <h4>Loading</h4>
+                    <p>Configuration is loaded from (in order)</p>
+                    <pre>$NODE_CONFIG_DIR
+  |-- default.json
+  |-- $NODE_ENV.json
+  `-- runtime.json</pre>
+                    <p><code>default.json</code> should contain the bulk of your configuration, with
+                    host/environment specific overrides in <code>$NODE_ENV.json</code>. By convention
+                    <code>runtime.json</code> should only be used for overrides that you've applied
+                    manually, i.e. outside of a proper deployment cycle, but in reality a config reload
+                    will parse all three files, not just the latter.</p>
+                    <p>Configuration can be reloaded at runtime by sending a SIGHUP to the parent process.
+                    After the configuration is reloaded it emits a <code>loaded</code> event.</p>
+                    <p>In general configuration is either used once on startup and never again (e.g.
+                    webserver listen port) or accessed at runtime through <code>config.get()</code>,
+                    which always accesses the most recently loaded value (e.g. log levels).
+                </div>
+            </div>
+            <div class="row" id="s-client-code-grant">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h3>9.0 Pattern: Auth Code Grant</h3>
+                    <p>The <a href="http://tools.ietf.org/html/rfc6749#section-4.1">Authorization Code Grant</a>
+                    is the preferred OAuth 2.0 pattern. It completely hides the access tokens
+                    from the Resource Owner (and User Agent), side-stepping many of the security
+                    issues inherent in <a href="http://tools.ietf.org/html/rfc6749#section-4.2">Implicit Grants</a>.</p>
+                    <p>On the down side, Clients require server-side support for the back channel
+                    token exchange, meaning it can't be implemented entirely in-browser in JavaScript.</p>
+                </div>
+            </div>
+            <div class="row" id="s-client-code-grant-token">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h3>9.1 Obtaining Authorization</h3>
+                    <p>&nbsp;</p>
+                    <img class="img-responsive" src="img/diag_code_auth.png" alt="OAuth2.0 - Authorization Code Grant">
+                    <p><em>See <a href="http://tools.ietf.org/html/rfc6749#section-4.1">RFC 6749 for more</a></em></p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h4>(A) Client site adds a <em>"Log in with &lt;X&gt;"</em> link</h4>
+                    <blockquote>The client initiates the flow by directing the resource owner's
+user-agent to the authorization endpoint.  The client includes
+its client identifier, requested scope, local state, and a
+redirection URI to which the authorization server will send the
+user-agent back once access is granted (or denied).</blockquote>
+                    <p>Link example:</p>
+                    <pre>https://oauth.example.com/authorize?
+    response_type=code&
+    client_id=MySite&
+    redirect_uri=http%3A%2F%2Fmysite.com%2F&
+    scope=profile&
+    state=af87ed7f6b22</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>response_type</code>: Must be <code>code</code> - you're
+                            asking it to grant you an authorization code, not an access token.</li>
+                            <li><code>client_id</code>: The client ID portion of the credentials
+                            issued by the Authorization Server. The client secret isn't used until
+                            you exchange the code for an actual access token in the back channel
+                            POST to <code>/token</code>.</li>
+                            <li><code>redirect_uri</code>: The location on your site where the user
+                            should land after the grant process completes.
+                            This URI <em>must not</em> include a URI fragment.
+                            All of the redirection URIs you intend to use must be pre-registered
+                            with the Authorization Server.</li>
+                            <li><code>scope</code>: Optional; defined by the Resource Server.</li>
+                            <li><code>state</code>: Recommended; an opaque value used by the Client site to maintain
+                            state between the request and callback. This is an important layer of defense against
+                            CSRF attacks.</li>
+                        </ul>
+                    </span>
+                    <p>&nbsp;</p>
+                    <h4>(B) User authentication and consent</h4>
+                    <blockquote>
+                    The authorization server authenticates the resource owner (via
+                    the user-agent) and establishes whether the resource owner
+                    grants or denies the client's access request.
+                    </blockquote>
+                    <p>&nbsp;</p>
+                    <h4>(C) Code granted</h4>
+                    <blockquote>
+                    Assuming the resource owner grants access, the authorization
+                    server redirects the user-agent back to the client using the
+                    redirection URI provided earlier (in the request or during
+                    client registration).  The redirection URI includes an
+                    authorization code and any local state provided by the client
+                    earlier.
+                    </blockquote>
+                    <p>Redirection example:</p>
+                    <pre>http://mysite.com/?code=wglXO28xcX91Pthn&state=af87ed7f6b22</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>code</code>: A one time code that the Client, <code>mysite.com</code>, can use to redeem an access token.</li>
+                            <li><code>state</code>: Any optional <code>state</code> that was passed to the original request.</li>
+                        </ul>
+                    </span>
+                    <p>&nbsp;</p>
+                    <h4>(D) Access token request</h4>
+                    <blockquote>
+                    The client requests an access token from the authorization
+                    server's token endpoint by including the authorization code
+                    received in the previous step.  When making the request, the
+                    client authenticates with the authorization server.  The client
+                    includes the redirection URI used to obtain the authorization
+                    code for verification.
+                    </blockquote>
+                    <p>POST example:</p>
+<pre>POST /token HTTP/1.1
+Host: oauth.example.com
+Accept-Encoding: gzip, deflate
+Cookie:
+User-Agent: node-superagent/0.18.0
+Authorization: Basic dGVzdDpodW50ZXIy
+Content-Type: application/json
+Content-Length: 101
+Connection: close
+
+{"grant_type":"authorization_code","code":"wglXO28xcX91Pthn","redirect_uri":"http://mysite.com/"}</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>grant_type</code>: Must be <code>authorization_code</code>.</li>
+                            <li><code>code</code>: The authorization code returned in (C).</li>
+                            <li><code>redirect_uri</code>: A valid URI as in (A).</li>
+                        </ul>
+                    </span>
+                    <p>The preferred means of Client authentication is through the HTTP Basic
+                    Authentication header as above (i.e. base64 <code>&lt;client_id&gt;:&lt;client_secret&gt;</code>), but it's also possible to include those credentials in the body of the POST:
+<pre>POST /token HTTP/1.1
+Host: oauth.example.com
+Accept-Encoding: gzip, deflate
+Cookie: 
+User-Agent: node-superagent/0.18.0
+Content-Type: application/json
+Content-Length: 146
+Connection: close
+
+{"grant_type":"authorization_code","code":"wglXO28xcX91Pthn","redirect_uri":"http://mysite.com/","client_id":"MySite","client_secret":"hunter2"}</pre>
+                    <p>&nbsp;</p>
+                    <h4>(E) Access token response</h4>
+                    <blockquote>
+                    The authorization server authenticates the client, validates the
+                    authorization code, and ensures that the redirection URI
+                    received matches the URI used to redirect the client in
+                    step (C).  If valid, the authorization server responds back with
+                    an access token and, optionally, a refresh token.
+                    </blockquote>
+<pre>HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: application/json
+Cache-Control: no-store
+Pragma: no-cache
+Date: Sun, 01 Jun 2014 04:11:19 GMT
+Connection: keep-alive
+Transfer-Encoding: chunked
+
+{"access_token":"emnziC15S33dffGUoJsPqxc0C5GGW4XT2Hd18xINwoZW0og1TtTolpFA09O7YCqWaYC8pKDH38QZlqR0q3MgEsyj8O8A6dYqaMLSHBh2lWTVfghkd5BdaVxqCszwjlJX5Cm5IcXJfIErq75JWmVDgXcWij7NJ1eyRFG4mGmDNHjJ4gdi1jIxbcml8jCNRlAyx9wY81KB6hSsdCoaWpPqyIvXF98AyBEM0cPnhmYotrvCtKF2Zr1ge6CO8IS7Vevg","refresh_token":"cMaXWsvgoNzgqWfchTPyWJq3OvbGKDMJcsIzyg8nxQ5qQfasYvMfahfIGWMnCpt8FMC2xW26ALikq3JOSRB2ZVZ3gTdqkPJ1zramKc9srbkaMPA0yCTy8YASZYYO85wR0tArTYXBXOxJ4iytGCLbee7HIXUr4yvKdmvvhro08lXlOIIHoF3cIywHCHK7URZPCUtqnQZuSAZBXUztdeYM8MwAYXjR2RjShXUADvOlec2hbakYBjO2FOoh4d7KtoTc","expires_in":7200,"token_type":"Bearer"}</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>access_token</code>: A short lived token (e.g. 2 hours)
+                            that can be used to access protected resources.</li>
+                            <li><code>refresh_token</code>: A longer lived token (e.g. 90 days) that can be
+                            exchanged for a new <code>access_token</code>/<code>refresh_token</code> pair.</li>
+                            <li><code>expires_in</code>: The number of seconds until the access token expires.</li>
+                            <li><code>token_type</code>: Always <code>Bearer</code>.</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+            <div class="row" id="s-client-code-grant-refresh">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h3>9.2 Using Refresh Tokens</h3>
+                    <p>&nbsp;</p>
+                    <img class="img-responsive" src="img/diag_refresh_token.png" alt="OAuth2.0 - Authorization Code Grant">
+                    <p><em>See <a href="http://tools.ietf.org/html/rfc6749#section-1.5">RFC 6749 for more</a></em></p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <h4>(A) &amp; (B) as before</h4>
+                    <h4>(C) Client accesses protected resource</h4>
+                    <blockquote>The client makes a protected resource request to the resource
+                    server by presenting the access token.</blockquote>
+                    <p>The access token appears in the HTTP Bearer Auth header.</p>
+<pre>GET /api/profile HTTP/1.1
+Host: oauth.example.com
+Accept-Encoding: gzip, deflate
+Cookie: 
+User-Agent: node-superagent/0.18.0
+Authorization: Bearer emnziC15S33dffGUoJsPqxc0C5GGW4XT2Hd18xINwoZW0og1TtTolpFA09O7YCqWaYC8pKDH38QZlqR0q3MgEsyj8O8A6dYqaMLSHBh2lWTVfghkd5BdaVxqCszwjlJX5Cm5IcXJfIErq75JWmVDgXcWij7NJ1eyRFG4mGmDNHjJ4gdi1jIxbcml8jCNRlAyx9wY81KB6hSsdCoaWpPqyIvXF98AyBEM0cPnhmYotrvCtKF2Zr1ge6CO8IS7Vevg
+Connection: close</pre>
+                    <p>&nbsp;</p>
+                    <h4>(D) Protected resource response</h4>
+                    <blockquote>The resource server validates the access token, and if valid,
+                    serves the request.</blockquote>
+                    <p>Note that in order to minimise the changes required to the Resource Server,
+                    the provider has the option of proxying these access requests through
+                    the Authorization Server, isolating the token validation logic from the
+                    Resource Server itself.</p>
+<pre>
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+Content-Type: application/json; charset=utf-8
+Content-Length: 52
+Date: Tue, 03 Jun 2014 09:18:25 GMT
+Connection: close
+
+{"id":"f1d2d2f9", "first_name":"Bob", "last_name":"Smith", "email":"bob@example.com"}</pre>
+                    <p>Contact your specific provider for a specification of the available API endpoints and
+                    their associated response attributes.</p>
+                    <p>&nbsp;</p>
+                    <h4>(E) Subsequent resource request</h4>
+                    <blockquote>Steps (C) and (D) repeat until the access token expires.  If the
+                    client knows the access token expired, it skips to step (G);
+                    otherwise, it makes another protected resource request.</blockquote>
+                    <p>&nbsp;</p>
+                    <h4>(F) Failure response</h4>
+                    <blockquote>Since the access token is invalid, the resource server returns
+                    an invalid token error.</blockquote>
+<pre>HTTP/1.1 401 Unauthorized
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+WWW-Authenticate: Bearer realm="Users", error="invalid_token"
+Date: Tue, 03 Jun 2014 09:18:25 GMT
+Connection: close
+Transfer-Encoding: chunked
+
+Unauthorized</pre>
+                    <p>&nbsp;</p>
+                    <h4>(G) Refresh token request</h4>
+                    <blockquote>The client requests a new access token by authenticating with
+                    the authorization server and presenting the refresh token.  The
+                    client authentication requirements are based on the client type
+                    and on the authorization server policies.</blockquote>
+                    <p>Note the presence of the Client's HTTP Basic Auth header.</p>
+<pre>POST /token HTTP/1.1
+Host: oauth.example.com
+Accept-Encoding: gzip, deflate
+Cookie: 
+User-Agent: node-superagent/0.18.0
+Authorization: Basic dGVzdDpodW50ZXIy
+Content-Type: application/json
+Content-Length: 305
+Connection: close
+
+{"grant_type":"refresh_token","refresh_token":"cMaXWsvgoNzgqWfchTPyWJq3OvbGKDMJcsIzyg8nxQ5qQfasYvMfahfIGWMnCpt8FMC2xW26ALikq3JOSRB2ZVZ3gTdqkPJ1zramKc9srbkaMPA0yCTy8YASZYYO85wR0tArTYXBXOxJ4iytGCLbee7HIXUr4yvKdmvvhro08lXlOIIHoF3cIywHCHK7URZPCUtqnQZuSAZBXUztdeYM8MwAYXjR2RjShXUADvOlec2hbakYBjO2FOoh4d7KtoTc"}</pre>
+                    <span class="words">
+                        <ul>
+                            <li><code>grant_type</code>: Must be <code>refresh_token</code>.</li>
+                            <li><code>refresh_token</code>: The token returned on a previous call to <code>/token</code>.</li>
+                        </ul>
+                    </span>
+                    <p>&nbsp;</p>
+                    <h4>(H) New access token response</h4>
+                    <blockquote>The authorization server authenticates the client and validates
+                    the refresh token, and if valid, issues a new access token (and,
+                    optionally, a new refresh token).</blockquote>
+<pre>HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: application/json
+Cache-Control: no-store
+Pragma: no-cache
+Date: Tue, 03 Jun 2014 09:18:25 GMT
+Connection: close
+Transfer-Encoding: chunked
+
+{"access_token":"wPxG4ZEgXZmBG3rMRcb7tSE4Wp32f1hHp0TiVvB9RubhZ0KMLFXpiAMdtdW5mtx58lax29PKoCvwd7KYOf6pmWD70kNVDebCXeon4iW5RsrQkxKCpB5qOdtqoweHysAwettDBlVLWREYYiwYkrPqpd92cvFS9Q8SQwptj3iYeUgkFtT26YtrmivQq7lLkfICJsGApYVzA9PANyXps4Qq9I57HgpnryeS3yGkBIt3HCM6ZF2TcLgNBdMAg1sJMrRI","refresh_token":"cntSZunRNWGvq7R2Xyx8RJE5C9uRhUObCBIcWQxud1xtEWnWrrPSKwp2Xn1TH1HSdIdjXMWjR56S8rP4kh8inpRFGW3bbWNRgloej7uorIpp310KaxcIB8X5lPix8TuAHzwgAZRFpHkezQrKzSwTRLgCLuHszzw6QZIbhEYW6aA5e48BqRJbZ1B2YjRcCw9TykhBBp0eAusR3dbGKFrm8qvF53ZqhmWPjwtWsdNxqJTqyJ3IvfzpMCAUGiEP5p2D","expires_in":7200,"token_type":"Bearer"}</pre>
                 </div>
             </div>
         </div>
