@@ -296,9 +296,9 @@
                     <p>The <code>login()</code> function should invoke <code>next</code> in the following ways:</p>
                     <span class="words">
                         <ul>
-                            <li>Login success: <code>next(null, {id: <em>UID</em>, site_token: <em>T</em>, ...})</code></li>
-                            <li>Login failure: <code>next(null, false, {message: '...'})</code></li>
-                            <li>Internal error: <code>next(err)</code></li>
+                            <li>Login success: <pre><code>next(null, {id: <em>UID</em>, site_token: <em>T</em>, ...})</code></pre></li>
+                            <li>Login failure: <pre><code>next(null, false, {message: '...'})</code></pre></li>
+                            <li>Internal error: <pre><code>next(err)</code></pre></li>
                         </ul>
                     </span>
                     <p>The <code>api</code> functions should use the <code>site_token</code> above (available
