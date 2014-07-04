@@ -6,8 +6,7 @@ var sa      = require('superagent'),
 
 var host;
 config.defer(function(err, conf){
-    host = (conf.auth_server.ssl ? 'https' : 'http') +
-            '://' + conf.auth_server.hostname + ':' + conf.auth_server.port
+    host = conf.auth_server.url
 });
 
 function make_user(){

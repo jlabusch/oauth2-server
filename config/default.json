@@ -1,6 +1,6 @@
 {
     "auth_server": {
-        "hostname": "127.0.0.1",
+        "url": "http://127.0.0.1:8081",
         "port": 8081,
         "ssl": false,
         "ssl_cert": null,

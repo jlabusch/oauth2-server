@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export NODE_CONFIG_DIR=${NODE_CONFIG_DIR:=config}
-NODE_ENV=${NODE_ENV:=development}
+NODE_ENV=${NODE_ENV:=$HOSTNAME}
 if [ -n "$1" ]; then
     NODE_ENV=$1
 fi
@@ -9,9 +9,14 @@ export NODE_ENV
 
 echo "Environment: $NODE_ENV"
 
+PIDDIR=/var/run
+if [ $NODE_ENV = "test" ]; then
+    PIDDIR=.
+fi
+
 function startf(){
     APP=$1
-    PIDFILE=$APP.pid
+    PIDFILE=$PIDDIR/$(basename $APP).pid
 
     if [ -e $PIDFILE ]; then
         PID=$(cat $PIDFILE)
@@ -27,9 +32,9 @@ function startf(){
         fi
     fi
     echo "node $APP" >&2
-    node $APP
+    node $APP $PIDFILE
 }
 
-startf ./dummy-servers/resource-server.js # this is a no-op unless resource_server.type is "dummy"
+test $NODE_ENV = test && startf ./dummy-servers/resource-server.js # this is a no-op unless resource_server.type is "dummy"
 startf ./src/server.js
 exit 0

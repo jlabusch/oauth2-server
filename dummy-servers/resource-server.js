@@ -4,7 +4,7 @@ var logger = require('../lib/logging'),
     config = require('../lib/config'),
     fs = require('fs');
 
-var PIDFILE = process.argv[1] + '.pid';
+var PIDFILE = process.argv[2];
 fs.writeFile(PIDFILE, process.pid + '\n', function(err){
     if (err){
         logger.log('error', "Couldn't write process ID to " + PIDFILE);

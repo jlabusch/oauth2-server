@@ -271,6 +271,15 @@ function valid_client(clientID, redirectURI, done){
     });
 }
 
+// Add a wrapper to handle the asynchronous loading of the redirect URL
+var __ensureLoggedIn = undefined;
+function ensureLoggedIn_wrapper(){
+    if (!__ensureLoggedIn){
+        __ensureLoggedIn = login.ensureLoggedIn(config.get('auth_server').url + '/login');
+    }
+    return __ensureLoggedIn.apply(this, arguments);
+}
+
 // user authorization endpoint
 //
 // `authorization` middleware accepts a `validate` callback which is
@@ -287,7 +296,7 @@ function valid_client(clientID, redirectURI, done){
 // authorization).  We accomplish that here by routing through `ensureLoggedIn()`
 // first, and rendering the `dialog` view. 
 exports.authorization = [
-    login.ensureLoggedIn(),
+    ensureLoggedIn_wrapper,
     server.authorization(valid_client),
     function(req, res){
         var scope = [];
@@ -332,7 +341,7 @@ exports.authorization = [
 // the list of Clients that tokens have been granted to, and revoke as many of those
 // tokens as they wish.
 exports.authorization_review = [
-    login.ensureLoggedIn(),
+    ensureLoggedIn_wrapper,
     function(req, res, next){
         if (!req.session){
             log('error', 'No session support found.');
@@ -435,7 +444,7 @@ exports.authorization_review = [
 // client, the above grant middleware configured above will be invoked to send
 // a response.
 exports.decision = [
-    login.ensureLoggedIn(),
+    ensureLoggedIn_wrapper,
     server.decision(function(req, done){
         var userID = req.user.id,
             clientID = req.oauth2.client.id;
@@ -470,7 +479,7 @@ exports.decision = [
 //
 // `decision` middleware for processing authorization_review interactions.
 exports.decision_update = [
-    login.ensureLoggedIn(),
+    ensureLoggedIn_wrapper,
     function(req, res, next){
         // Based on the oauth2orize transactionLoader middleware
         if (!req.session){
