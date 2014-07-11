@@ -10,7 +10,7 @@ export NODE_ENV
 echo "Environment: $NODE_ENV"
 
 PIDDIR=/var/run
-if [ $NODE_ENV = "test" ]; then
+if [ "$NODE_ENV" = "test" ] || [ ! -w $PIDDIR ] ; then
     PIDDIR=.
 fi
 

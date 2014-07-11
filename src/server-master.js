@@ -4,7 +4,7 @@ var fs = require('fs'),
     config = require('../lib/config');
 
 exports.run = function(){
-    var PIDFILE = process.argv[2];
+    var PIDFILE = process.argv.length > 2 ? process.argv[2] : './server.js.pid';
     fs.writeFile(PIDFILE, process.pid + '\n', function(err){
         if (err){
             log('error', "Couldn't write process ID to " + PIDFILE);

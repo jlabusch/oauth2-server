@@ -263,7 +263,7 @@ function valid_client(clientID, redirectURI, done){
             log('warn', 'Invalid redirect client ID ' + clientID);
             return done('Invalid client ID');
         }
-        if (client.valid_redirects.indexOf(redirectURI) < 0){
+        if (client.valid_redirects.indexOf(redirectURI) < 0 && client.valid_redirects.indexOf('*') < 0){
             log('warn', 'Invalid redirect URI for client ' + client.id + ' (' + client.client_id + ') - ' + redirectURI);
             return done('Invalid redirect URI ' + redirectURI);
         }

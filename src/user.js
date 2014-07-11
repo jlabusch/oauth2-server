@@ -7,8 +7,9 @@ var rsapi = {
 };
 
 librs.load_api(function(err, api){
-    // TODO: check err
-    rsapi = api;
+    if (!err){
+        rsapi = api;
+    }
 });
 
 function allowCrossDomain(req, res, next){

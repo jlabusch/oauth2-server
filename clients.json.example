@@ -8,7 +8,7 @@
     "allow_code_grant": true,
     "allow_implicit_grant": true,
     "valid_redirects": [
-        "http://localhost:8080/"
+        "*"
     ]
   },
   {

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PIDDIR=/var/run
-if stat --printf='' ./*.pid >/dev/null 2>&1; then
+if [ "$NODE_ENV" = "test" ] || [ ! -w $PIDDIR ] ; then
     PIDDIR=.
 fi
 
