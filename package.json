@@ -1,7 +1,7 @@
 {
   "name": "oauth2-server",
   "description": "OAuth 2.0 server package",
-  "version": "0.5.0",
+  "version": "0.7.0",
   "private": "true",
   "author": {
     "name": "Jacques Labuschagne",
