@@ -11,7 +11,8 @@
             "layout": "layout",
             "login": "login",
             "dialog": "dialog",
-            "review": "review"
+            "review": "review",
+            "error": "error"
         }
     },
     "client_credentials": {

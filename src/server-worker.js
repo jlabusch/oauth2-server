@@ -22,9 +22,6 @@ exports.run = function(){
     config.defer(function(err, cfg){
         // TODO: should check err arg
 
-        // TODO: Ensure X-SSL-Client header is present if we do end up terminating SSL at the border.
-        //       (Please don't terminate SSL at the border.)
-
         if (cfg.auth_server.ssl){
             var ssl_key = fs.readFileSync(cfg.auth_server.ssl_key, 'utf8'),
                 ssl_cert = fs.readFileSync(cfg.auth_server.ssl_cert, 'utf8');
@@ -56,8 +53,6 @@ exports.run = function(){
         }));
         app.use(passport.initialize());
         app.use(passport.session());
-        // TODO: We need to replace the standard Express error handler.
-        app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 
         app.use(express.static(__dirname + '/../static/'));
 
@@ -117,6 +112,20 @@ exports.run = function(){
 
         app.get('/healthcheck', function(req, res){
             res.send(new Date().getTime() + '\r\n');
+        });
+
+        app.use(function(err, req, res, next){
+            try{
+                res.statusCode = 500;
+                log('error', err.stack);
+                if (cfg.auth_server.views.error){
+                    res.render(cfg.auth_server.views.error, {message: err.message});
+                    return;
+                }
+            }catch(ex){
+                log('error', 'Exception in error handler: ' + ex);
+            }
+            res.end();
         });
 
         app.listen(cfg.auth_server.port, function(){
