@@ -261,11 +261,11 @@ function valid_client(clientID, redirectURI, done){
         }
         if (!client){
             log('warn', 'Invalid redirect client ID ' + clientID);
-            return done('Invalid client ID');
+            return done(null, false);
         }
         if (client.valid_redirects.indexOf(redirectURI) < 0 && client.valid_redirects.indexOf('*') < 0){
             log('warn', 'Invalid redirect URI for client ' + client.id + ' (' + client.client_id + ') - ' + redirectURI);
-            return done('Invalid redirect URI ' + redirectURI);
+            return done(null, false);
         }
         return done(null, client, redirectURI);
     });
@@ -350,6 +350,10 @@ exports.authorization_review = [
         valid_client(req.query.client_id, req.query.redirect_uri, function(err, client, redirectURI){
             if (err){
                 return next(new Error("Unauthorized Client"));
+            }
+            if (!client){
+                log('error', "No such client " + req.query.client_id);
+                return next(new Error('Invalid Client'));
             }
             // We have to look at both access tokens and refresh tokens because
             // implicit grants only allocate access tokens.

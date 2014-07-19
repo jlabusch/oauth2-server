@@ -258,6 +258,13 @@ var validate = {
             res.should.have.status(200);
             (!res.redirects).should.be.false;
             res.redirects.length.should.equal(0);
+            done(res.text);
+        }
+    },
+    invalid_client_redirect: function(done){
+        return function(err, res){
+            should.not.exist(err);
+            res.should.have.status(500);
             done();
         }
     }
@@ -659,13 +666,26 @@ describe('revoke access', function(){
         it('should get a token for c2', setup_for_revoke(u2, c2, 'alice@example.com.x'));
     });
     describe('/review', function(){
+        var page = '';
         it('should show page', function(done){
             u1.a.get(host + '/review?client_id=' + c1.name + '&redirect_uri=' + c1.uri)
-                .end(validate.showing_review_page(done));
+                .end(validate.showing_review_page(function(text){
+                    page = text;
+                    should.exist(page);
+                    done();
+                }));
         });
-        it('should list existing tokens');
+        it('should list existing tokens', function(){
+            (page.indexOf('Hi alice') > -1).should.be.true;
+            (page.indexOf('Stuff Nation IdP Demo') > -1).should.be.true;
+            (page.indexOf('Automated tests') > -1).should.be.true;
+        });
         it('should allow access+refresh pair to be revoked');
-        it('should require valid client credentials');
+        it('should require valid client credentials', function(done){
+            u2.a.get(host + '/review?client_id=asdqwe&redirect_uri=' + c1.uri)
+                .redirects(0) // don't follow any redirects
+                .end(validate.invalid_client_redirect(done));
+        });
         it('should require valid transaction ID');
     });
 });
