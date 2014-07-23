@@ -49,7 +49,7 @@ exports.run = function(){
             secret: cfg.auth_server.session_secret,
             key: 'sid',
             // TODO: proxy: !cfg.auth_server.ssl, cookie.secure always true
-            cookie: {secure: cfg.auth_server.ssl}
+            cookie: {secure: cfg.auth_server.ssl} // by default cookie lifetime is null (browser session)
         }));
         app.use(passport.initialize());
         app.use(passport.session());
