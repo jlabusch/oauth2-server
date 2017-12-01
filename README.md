@@ -8,6 +8,11 @@ Documentation
 
 http://jlabusch.github.io/oauth2-server/
 
+Warning
+-------
+
+This project is not actively maintained, and there's at least one vulnerability present due to outdated dependencies. If you ever want to use this, use a recent version of Node and update all of the dependencies listed in `package.json`.
+
 License - GPLv3
 ---------------
 
